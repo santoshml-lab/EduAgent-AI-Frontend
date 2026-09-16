@@ -686,8 +686,17 @@ body {
   /* Mobile arrows */
 
   .arrow {
-    display: none;
+  display: block;
+  width: 35px;
+  min-width: 35px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #6f7fa5;
+  animation: arrowFlow 1.1s ease-in-out infinite;
   }
+    
+  
 
 }
 
