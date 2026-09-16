@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,11 +20,25 @@
         🤖 EduAgent <span>AI</span>
       </div>
 
-      <div class="nav-item active">💬 Chat</div>
-      <div class="nav-item">🔀 Agent Workflow</div>
-      <div class="nav-item">🔎 Search Sources</div>
-      <div class="nav-item">📝 Quiz Generator</div>
-      <div class="nav-item">📅 Study Planner</div>
+      <div class="nav-item active">
+        💬 Chat
+      </div>
+
+      <div class="nav-item">
+        🔀 Agent Workflow
+      </div>
+
+      <div class="nav-item">
+        🔎 Search Sources
+      </div>
+
+      <div class="nav-item">
+        📝 Quiz Generator
+      </div>
+
+      <div class="nav-item">
+        📅 Study Planner
+      </div>
 
     </aside>
 
@@ -46,10 +61,12 @@
       </div>
 
 
-      <!-- Hero / Chat -->
+      <!-- Hero -->
       <section class="hero">
 
-        <h2>Your AI Education Agent 🧠</h2>
+        <h2>
+          Your AI Education Agent 🧠
+        </h2>
 
         <p>
           Ask questions, solve problems, create quizzes,
@@ -64,11 +81,28 @@
             placeholder="Ask EduAgent anything..."
           >
 
-          <button onclick="askAgent()">
+          <button
+            id="askButton"
+            onclick="askAgent()"
+          >
             Ask EduAgent
           </button>
 
         </div>
+
+      </section>
+
+
+      <!-- AI Response -->
+      <section
+        class="workflow"
+        id="responseSection"
+        style="display: none;"
+      >
+
+        <h3>🤖 EduAgent Response</h3>
+
+        <div id="answerBox"></div>
 
       </section>
 
@@ -80,14 +114,19 @@
 
         <div class="nodes">
 
-          <div class="node">
+          <div class="node" id="userNode">
+
             <div class="node-title">
               👤 User Query
             </div>
 
-            <div class="node-status">
+            <div
+              class="node-status"
+              id="userStatus"
+            >
               Waiting
             </div>
+
           </div>
 
 
@@ -96,14 +135,19 @@
           </div>
 
 
-          <div class="node">
+          <div class="node" id="routerNode">
+
             <div class="node-title">
               🧠 Education Router
             </div>
 
-            <div class="node-status">
+            <div
+              class="node-status"
+              id="routerStatus"
+            >
               Waiting
             </div>
+
           </div>
 
 
@@ -112,14 +156,19 @@
           </div>
 
 
-          <div class="node">
+          <div class="node" id="toolNode">
+
             <div class="node-title">
               🔧 Tool
             </div>
 
-            <div class="node-status">
+            <div
+              class="node-status"
+              id="toolStatus"
+            >
               Waiting
             </div>
+
           </div>
 
 
@@ -128,14 +177,19 @@
           </div>
 
 
-          <div class="node">
+          <div class="node" id="responseNode">
+
             <div class="node-title">
               🤖 AI Response
             </div>
 
-            <div class="node-status">
+            <div
+              class="node-status"
+              id="responseStatus"
+            >
               Waiting
             </div>
+
           </div>
 
         </div>
@@ -149,73 +203,195 @@
 
   <script>
 
-  const BACKEND_URL =
-  "https://eduagent-ai-osvz.onrender.com/ask";
-    
+    const BACKEND_URL =
+      "https://eduagent-ai-osvz.onrender.com/ask";
 
 
-  async function askAgent() {
+    async function askAgent() {
 
-    const input =
-      document.getElementById("questionInput");
+      const input =
+        document.getElementById("questionInput");
 
-    const question = input.value.trim();
+      const button =
+        document.getElementById("askButton");
 
-    if (!question) {
-      alert("Please enter a question.");
-      return;
-    }
+      const responseSection =
+        document.getElementById("responseSection");
 
+      const answerBox =
+        document.getElementById("answerBox");
 
-    try {
+      const userStatus =
+        document.getElementById("userStatus");
 
-      const response = await fetch(BACKEND_URL, {
+      const routerStatus =
+        document.getElementById("routerStatus");
 
-        method: "POST",
+      const toolStatus =
+        document.getElementById("toolStatus");
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          question: question
-        })
-
-      });
+      const responseStatus =
+        document.getElementById("responseStatus");
 
 
-      if (!response.ok) {
-        throw new Error(
-          `Server error: ${response.status}`
-        );
+      const question =
+        input.value.trim();
+
+
+      if (!question) {
+        alert("Please enter a question.");
+        return;
       }
 
 
-      const data = await response.json();
+      /* Start */
+
+      button.disabled = true;
+      button.innerText = "Thinking...";
+
+      responseSection.style.display = "block";
+
+      answerBox.innerHTML =
+        "<p>🤔 EduAgent is processing your question...</p>";
 
 
-      console.log("EduAgent Response:", data);
+      /* Workflow status */
 
-      alert(data.answer);
+      userStatus.innerText =
+        "✓ Received";
+
+      routerStatus.innerText =
+        "⏳ Processing";
+
+      toolStatus.innerText =
+        "Waiting";
+
+      responseStatus.innerText =
+        "Waiting";
 
 
-    } catch (error) {
+      try {
 
-      console.error(error);
+        const response =
+          await fetch(BACKEND_URL, {
 
-      alert(
-        "Unable to connect to EduAgent backend."
-      );
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+              question: question
+            })
+
+          });
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Server error: ${response.status}`
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        console.log(
+          "EduAgent Response:",
+          data
+        );
+
+
+        /* Router completed */
+
+        routerStatus.innerText =
+          "✓ Completed";
+
+
+        /* Detect tool */
+
+        if (
+          data.tool_trace &&
+          data.tool_trace.length > 0
+        ) {
+
+          const lastTool =
+            data.tool_trace[
+              data.tool_trace.length - 1
+            ];
+
+          toolStatus.innerText =
+            `✓ ${lastTool.tool}`;
+
+        } else {
+
+          toolStatus.innerText =
+            "✓ No tool required";
+
+        }
+
+
+        /* Final response */
+
+        responseStatus.innerText =
+          "✓ Generated";
+
+
+        answerBox.innerHTML =
+          `<div class="answer-content">
+            ${formatAnswer(data.answer)}
+          </div>`;
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        routerStatus.innerText =
+          "⚠ Error";
+
+        toolStatus.innerText =
+          "⚠ Error";
+
+        responseStatus.innerText =
+          "⚠ Failed";
+
+
+        answerBox.innerHTML =
+          `<p>
+            ❌ Unable to connect to EduAgent backend.
+          </p>`;
+
+      }
+
+
+      button.disabled = false;
+      button.innerText =
+        "Ask EduAgent";
 
     }
 
-  }
+
+    function formatAnswer(answer) {
+
+      if (!answer) {
+        return "No answer received.";
+      }
+
+
+      return answer
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
+
+    }
 
   </script>
 
-    
-
-      
-
 </body>
+
 </html>
