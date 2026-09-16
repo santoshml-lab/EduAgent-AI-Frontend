@@ -370,8 +370,10 @@ body {
   }
 
   .arrow {
-    display: none;
+  display: block;
   }
+    
+  
 
 }
 
@@ -421,6 +423,35 @@ body {
     transform: scale(1);
     box-shadow:
       0 0 0 rgba(124, 140, 255, 0);
+  }
+
+}
+/* ================================
+   ANIMATED WORKFLOW ARROWS
+================================ */
+
+.arrow {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: bold;
+  animation: arrowFlow 1s ease-in-out infinite;
+}
+
+@keyframes arrowFlow {
+
+  0% {
+    opacity: 0.35;
+    transform: translateX(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(7px);
+  }
+
+  100% {
+    opacity: 0.35;
+    transform: translateX(0);
   }
 
 }
