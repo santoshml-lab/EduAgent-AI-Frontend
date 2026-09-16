@@ -1,0 +1,188 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #0b1020;
+  color: #f5f7ff;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background: #11182d;
+  border-right: 1px solid #26304d;
+  padding: 24px 18px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 35px;
+}
+
+.logo span {
+  opacity: 0.6;
+}
+
+.nav-item {
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  color: #aeb8d0;
+  cursor: pointer;
+}
+
+.nav-item.active,
+.nav-item:hover {
+  background: #202b4a;
+  color: #ffffff;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 28px;
+  overflow: auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.topbar h1 {
+  font-size: 25px;
+}
+
+.status {
+  background: #16243a;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+/* Hero */
+.hero {
+  background: #151e35;
+  border: 1px solid #273453;
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.hero h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  color: #aeb8d0;
+  margin-bottom: 22px;
+}
+
+/* Input */
+.input-area {
+  display: flex;
+  gap: 10px;
+}
+
+.input-area input {
+  flex: 1;
+  background: #0d1427;
+  border: 1px solid #34415f;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.input-area button {
+  border: none;
+  border-radius: 10px;
+  padding: 0 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Workflow */
+.workflow {
+  background: #151e35;
+  border: 1px solid #273453;
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.workflow h3 {
+  margin-bottom: 20px;
+}
+
+.nodes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.node {
+  background: #0d1427;
+  border: 1px solid #34415f;
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 145px;
+}
+
+.node-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.node-status {
+  font-size: 12px;
+  color: #9eabc5;
+}
+
+.arrow {
+  font-size: 20px;
+  color: #73809f;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .sidebar {
+    width: 190px;
+  }
+
+  .input-area {
+    flex-direction: column;
+  }
+
+  .input-area button {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .main {
+    padding: 16px;
+  }
+}
