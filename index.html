@@ -213,33 +213,60 @@
 
   function setNode(nodeId, status, active = false) {
 
-    const node =
-      document.getElementById(nodeId);
+  const node =
+    document.getElementById(nodeId);
 
-    const statusElement =
-      node.querySelector(".node-status");
+  if (!node) return;
+
+  const statusElement =
+    node.querySelector(".node-status");
 
 
-    statusElement.innerText = status;
+  statusElement.innerText = status;
 
 
-    if (active) {
+  // Remove previous states
+  node.classList.remove(
+    "active",
+    "completed",
+    "error"
+  );
 
-      node.style.borderColor = "#7c8cff";
-      node.style.boxShadow =
-        "0 0 20px rgba(124, 140, 255, 0.35)";
-      node.style.transform =
-        "translateY(-3px)";
 
-    } else {
+  // Active / processing
+  if (active) {
 
-      node.style.borderColor = "";
-      node.style.boxShadow = "";
-      node.style.transform = "";
-
-    }
+    node.classList.add("active");
 
   }
+
+
+  // Completed
+  else if (
+    status.includes("✓") ||
+    status.includes("Completed") ||
+    status.includes("Received") ||
+    status.includes("Generated")
+  ) {
+
+    node.classList.add("completed");
+
+  }
+
+
+  // Error
+  else if (
+    status.includes("⚠") ||
+    status.includes("Failed")
+  ) {
+
+    node.classList.add("error");
+
+  }
+
+  }
+
+    
 
 
   function resetWorkflow() {
