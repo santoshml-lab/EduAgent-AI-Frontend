@@ -413,16 +413,29 @@
 
   function formatAnswer(answer) {
 
-    if (!answer) {
-      return "No answer received.";
-    }
-
-
-    return answer
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\n/g, "<br>");
-
+  if (!answer) {
+    return "No answer received.";
   }
+
+  return answer
+    // Remove display-math markers
+    .replace(/\\\[/g, "")
+    .replace(/\\\]/g, "")
+
+    // Convert common LaTeX symbols
+    .replace(/\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\cdot/g, "·")
+
+    // Bold Markdown
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+
+    // Line breaks
+    .replace(/\n/g, "<br>");
+  }
+
+    
+      
 
   </script>
 
