@@ -1,15 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduAgent AI</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div id="root">
-    <h1>EduAgent AI</h1>
-    <p>AI-powered education agent</p>
+
+  <div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <div class="logo">
+        🤖 EduAgent <span>AI</span>
+      </div>
+
+      <div class="nav-item active">💬 Chat</div>
+      <div class="nav-item">🔀 Agent Workflow</div>
+      <div class="nav-item">🔎 Search Sources</div>
+      <div class="nav-item">📝 Quiz Generator</div>
+      <div class="nav-item">📅 Study Planner</div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+
+        <div>
+          <h1>EduAgent AI</h1>
+          <p>Intelligent Education Assistant</p>
+        </div>
+
+        <div class="status">
+          🟢 Agent Online
+        </div>
+
+      </div>
+
+
+      <!-- Hero / Chat -->
+      <section class="hero">
+
+        <h2>Your AI Education Agent 🧠</h2>
+
+        <p>
+          Ask questions, solve problems, create quizzes,
+          build study plans and search current information.
+        </p>
+
+        <div class="input-area">
+
+          <input
+            type="text"
+            id="questionInput"
+            placeholder="Ask EduAgent anything..."
+          >
+
+          <button onclick="askAgent()">
+            Ask EduAgent
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- Agent Workflow -->
+      <section class="workflow">
+
+        <h3>⚡ Agent Workflow</h3>
+
+        <div class="nodes">
+
+          <div class="node">
+            <div class="node-title">
+              👤 User Query
+            </div>
+
+            <div class="node-status">
+              Waiting
+            </div>
+          </div>
+
+
+          <div class="arrow">
+            →
+          </div>
+
+
+          <div class="node">
+            <div class="node-title">
+              🧠 Education Router
+            </div>
+
+            <div class="node-status">
+              Waiting
+            </div>
+          </div>
+
+
+          <div class="arrow">
+            →
+          </div>
+
+
+          <div class="node">
+            <div class="node-title">
+              🔧 Tool
+            </div>
+
+            <div class="node-status">
+              Waiting
+            </div>
+          </div>
+
+
+          <div class="arrow">
+            →
+          </div>
+
+
+          <div class="node">
+            <div class="node-title">
+              🤖 AI Response
+            </div>
+
+            <div class="node-status">
+              Waiting
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
   </div>
+
+
+  <script>
+
+    async function askAgent() {
+
+      const question =
+        document.getElementById("questionInput").value;
+
+      if (!question.trim()) {
+        alert("Please enter a question.");
+        return;
+      }
+
+      alert(
+        "Frontend is ready! Backend connection will be added next."
+      );
+    }
+
+  </script>
+
 </body>
 </html>
