@@ -207,6 +207,66 @@
     "https://eduagent-ai-osvz.onrender.com/ask";
 
 
+  const sleep = (ms) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+
+  function setNode(nodeId, status, active = false) {
+
+    const node =
+      document.getElementById(nodeId);
+
+    const statusElement =
+      node.querySelector(".node-status");
+
+
+    statusElement.innerText = status;
+
+
+    if (active) {
+
+      node.style.borderColor = "#7c8cff";
+      node.style.boxShadow =
+        "0 0 20px rgba(124, 140, 255, 0.35)";
+      node.style.transform =
+        "translateY(-3px)";
+
+    } else {
+
+      node.style.borderColor = "";
+      node.style.boxShadow = "";
+      node.style.transform = "";
+
+    }
+
+  }
+
+
+  function resetWorkflow() {
+
+    setNode(
+      "userNode",
+      "Waiting"
+    );
+
+    setNode(
+      "routerNode",
+      "Waiting"
+    );
+
+    setNode(
+      "toolNode",
+      "Waiting"
+    );
+
+    setNode(
+      "responseNode",
+      "Waiting"
+    );
+
+  }
+
+
   async function askAgent() {
 
     const input =
@@ -221,47 +281,65 @@
     const answerBox =
       document.getElementById("answerBox");
 
-    const userStatus =
-      document.getElementById("userStatus");
-
-    const routerStatus =
-      document.getElementById("routerStatus");
-
-    const toolStatus =
-      document.getElementById("toolStatus");
-
-    const responseStatus =
-      document.getElementById("responseStatus");
-
 
     const question =
       input.value.trim();
 
 
     if (!question) {
+
       alert("Please enter a question.");
+
       return;
+
     }
 
 
     button.disabled = true;
-    button.innerText = "Thinking...";
 
-    responseSection.style.display = "block";
+    button.innerText =
+      "Agent Working...";
+
+
+    responseSection.style.display =
+      "block";
+
 
     answerBox.innerHTML =
-      "<p>🤔 EduAgent is processing your question...</p>";
+      "<p>🤔 EduAgent is thinking...</p>";
 
 
-    /* Reset workflow */
-
-    userStatus.innerText = "⏳ Processing";
-    routerStatus.innerText = "Waiting";
-    toolStatus.innerText = "Waiting";
-    responseStatus.innerText = "Waiting";
+    resetWorkflow();
 
 
     try {
+
+      /* STEP 1 — USER */
+
+      setNode(
+        "userNode",
+        "⏳ Processing",
+        true
+      );
+
+      await sleep(500);
+
+      setNode(
+        "userNode",
+        "✓ Received"
+      );
+
+
+      /* STEP 2 — ROUTER */
+
+      setNode(
+        "routerNode",
+        "⏳ Routing...",
+        true
+      );
+
+
+      /* Backend request */
 
       const response =
         await fetch(BACKEND_URL, {
@@ -280,9 +358,11 @@
 
 
       if (!response.ok) {
+
         throw new Error(
           `Server error: ${response.status}`
         );
+
       }
 
 
@@ -290,29 +370,18 @@
         await response.json();
 
 
-      console.log(
-        "EduAgent Response:",
-        data
+      /* Router completed */
+
+      setNode(
+        "routerNode",
+        "✓ Completed"
       );
 
 
-      /* User Query */
-
-      userStatus.innerText =
-        "✓ Received";
+      await sleep(400);
 
 
-      /* Router */
-
-      routerStatus.innerText =
-        "✓ Completed";
-
-
-      /*
-       * Find the actual tool.
-       * education_router is not shown
-       * as the selected tool.
-       */
+      /* STEP 3 — TOOL */
 
       let actualTool = null;
 
@@ -331,48 +400,84 @@
       }
 
 
-      /* Display actual tool */
+      const toolNames = {
+
+        calculator:
+          "🧮 Calculator",
+
+        web_search:
+          "🔎 SerpApi",
+
+        quiz_generator:
+          "📝 Quiz Generator",
+
+        study_plan_generator:
+          "📅 Study Planner"
+
+      };
+
 
       if (actualTool) {
-
-        const toolNames = {
-
-          calculator:
-            "🧮 Calculator",
-
-          web_search:
-            "🔎 SerpApi",
-
-          quiz_generator:
-            "📝 Quiz Generator",
-
-          study_plan_generator:
-            "📅 Study Planner"
-
-        };
-
 
         const displayName =
           toolNames[actualTool.tool] ||
           `🔧 ${actualTool.tool}`;
 
 
-        toolStatus.innerText =
-          `✓ ${displayName}`;
+        setNode(
+          "toolNode",
+          `⏳ ${displayName}`,
+          true
+        );
+
+
+        await sleep(700);
+
+
+        setNode(
+          "toolNode",
+          `✓ ${displayName}`
+        );
 
       } else {
 
-        toolStatus.innerText =
-          "✓ Direct Answer";
+        setNode(
+          "toolNode",
+          "⏳ Direct Answer",
+          true
+        );
+
+
+        await sleep(500);
+
+
+        setNode(
+          "toolNode",
+          "✓ Direct Answer"
+        );
 
       }
 
 
-      /* Final response */
+      /* STEP 4 — AI RESPONSE */
 
-      responseStatus.innerText =
-        "✓ Generated";
+      setNode(
+        "responseNode",
+        "⏳ Generating...",
+        true
+      );
 
+
+      await sleep(600);
+
+
+      setNode(
+        "responseNode",
+        "✓ Generated"
+      );
+
+
+      /* Show answer */
 
       answerBox.innerHTML =
         `<div class="answer-content">
@@ -385,14 +490,20 @@
       console.error(error);
 
 
-      routerStatus.innerText =
-        "⚠ Error";
+      setNode(
+        "routerNode",
+        "⚠ Error"
+      );
 
-      toolStatus.innerText =
-        "⚠ Failed";
+      setNode(
+        "toolNode",
+        "⚠ Failed"
+      );
 
-      responseStatus.innerText =
-        "⚠ Failed";
+      setNode(
+        "responseNode",
+        "⚠ Failed"
+      );
 
 
       answerBox.innerHTML =
@@ -413,37 +524,43 @@
 
   function formatAnswer(answer) {
 
-  if (!answer) {
-    return "No answer received.";
+    if (!answer) {
+      return "No answer received.";
+    }
+
+
+    return answer
+
+      .replace(/\\\[/g, "")
+      .replace(/\\\]/g, "")
+      .replace(/\\\(/g, "")
+      .replace(/\\\)/g, "")
+
+      .replace(/\\times/g, "×")
+      .replace(/\\div/g, "÷")
+      .replace(/\\cdot/g, "·")
+
+      .replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+      )
+
+      .replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+      )
+
+      .replace(
+        /\n/g,
+        "<br>"
+      );
+
   }
-
-  return answer
-    // Remove LaTeX display markers
-    .replace(/\\\[/g, "")
-    .replace(/\\\]/g, "")
-    .replace(/\\\(/g, "")
-    .replace(/\\\)/g, "")
-
-    // Common LaTeX symbols
-    .replace(/\\times/g, "×")
-    .replace(/\\div/g, "÷")
-    .replace(/\\cdot/g, "·")
-
-    // Markdown bold
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-
-    // Markdown italic
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-
-    // Line breaks
-    .replace(/\n/g, "<br>");
-  }
-    
-
-    
-      
 
   </script>
+
+  
+      
 
     
     
