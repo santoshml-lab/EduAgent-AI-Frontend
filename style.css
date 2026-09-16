@@ -17,8 +17,10 @@ body {
 }
 
 /* Sidebar */
+
 .sidebar {
   width: 250px;
+  min-width: 250px;
   background: #11182d;
   border-right: 1px solid #26304d;
   padding: 24px 18px;
@@ -48,11 +50,13 @@ body {
   color: #ffffff;
 }
 
+
 /* Main */
+
 .main {
   flex: 1;
   padding: 28px;
-  overflow: auto;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -66,14 +70,22 @@ body {
   font-size: 25px;
 }
 
+.topbar p {
+  color: #8f9bb5;
+  margin-top: 4px;
+}
+
 .status {
   background: #16243a;
-  padding: 8px 14px;
+  border: 1px solid #2c3b5d;
+  padding: 9px 15px;
   border-radius: 20px;
   font-size: 13px;
 }
 
+
 /* Hero */
+
 .hero {
   background: #151e35;
   border: 1px solid #273453;
@@ -89,10 +101,13 @@ body {
 
 .hero p {
   color: #aeb8d0;
+  line-height: 1.5;
   margin-bottom: 22px;
 }
 
+
 /* Input */
+
 .input-area {
   display: flex;
   gap: 10px;
@@ -106,62 +121,203 @@ body {
   padding: 15px;
   border-radius: 10px;
   outline: none;
+  font-size: 15px;
+}
+
+.input-area input:focus {
+  border-color: #6175a8;
 }
 
 .input-area button {
   border: none;
   border-radius: 10px;
-  padding: 0 22px;
+  padding: 0 24px;
   font-weight: 700;
   cursor: pointer;
+  background: #f1f3f8;
+  color: #11182d;
 }
 
+.input-area button:hover {
+  opacity: 0.9;
+}
+
+.input-area button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+
+/* Response */
+
+#responseSection {
+  margin-bottom: 24px;
+}
+
+.answer-content {
+  color: #e8ecf7;
+  line-height: 1.65;
+  font-size: 15px;
+}
+
+
 /* Workflow */
+
 .workflow {
   background: #151e35;
   border: 1px solid #273453;
   border-radius: 18px;
   padding: 24px;
+  margin-bottom: 24px;
 }
 
 .workflow h3 {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+  font-size: 19px;
 }
+
+
+/* N8N-style workflow */
 
 .nodes {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px 10px 28px;
 }
 
+
+/* Node */
+
 .node {
+  position: relative;
   background: #0d1427;
   border: 1px solid #34415f;
   border-radius: 12px;
-  padding: 16px;
-  min-width: 145px;
+  padding: 17px;
+  width: 175px;
+  min-width: 175px;
+  min-height: 85px;
+  transition: all 0.25s ease;
 }
+
+
+/* Node hover */
+
+.node:hover {
+  border-color: #7182ad;
+  transform: translateY(-2px);
+}
+
+
+/* Node title */
 
 .node-title {
   font-weight: 700;
-  margin-bottom: 6px;
+  font-size: 15px;
+  margin-bottom: 8px;
 }
+
+
+/* Node status */
 
 .node-status {
   font-size: 12px;
   color: #9eabc5;
 }
 
+
+/* Arrows */
+
 .arrow {
-  font-size: 20px;
-  color: #73809f;
+  width: 55px;
+  min-width: 55px;
+  text-align: center;
+  font-size: 24px;
+  color: #647394;
 }
 
+
+/* Completed node */
+
+.node:has(.node-status:first-letter) {
+  transition: border-color 0.3s ease;
+}
+
+
 /* Responsive */
-@media (max-width: 800px) {
+
+@media (max-width: 900px) {
+
   .sidebar {
-    width: 190px;
+    width: 210px;
+    min-width: 210px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+
+  .hero h2 {
+    font-size: 24px;
+  }
+
+}
+
+
+/* Mobile */
+
+@media (max-width: 650px) {
+
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    padding: 16px;
+  }
+
+  .logo {
+    margin-bottom: 18px;
+  }
+
+  .nav-item {
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 9px 11px;
+    font-size: 13px;
+  }
+
+  .main {
+    padding: 14px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .status {
+    font-size: 11px;
+    padding: 7px 10px;
+  }
+
+  .hero {
+    padding: 20px;
+  }
+
+  .hero h2 {
+    font-size: 22px;
   }
 
   .input-area {
@@ -171,18 +327,14 @@ body {
   .input-area button {
     padding: 14px;
   }
-}
 
-@media (max-width: 600px) {
-  .app {
-    flex-direction: column;
+  .workflow {
+    padding: 18px;
   }
 
-  .sidebar {
-    width: 100%;
+  .nodes {
+    justify-content: flex-start;
+    overflow-x: auto;
   }
 
-  .main {
-    padding: 16px;
-  }
 }
