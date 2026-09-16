@@ -418,21 +418,27 @@
   }
 
   return answer
-    // Remove display-math markers
+    // Remove LaTeX display markers
     .replace(/\\\[/g, "")
     .replace(/\\\]/g, "")
+    .replace(/\\\(/g, "")
+    .replace(/\\\)/g, "")
 
-    // Convert common LaTeX symbols
+    // Common LaTeX symbols
     .replace(/\\times/g, "×")
     .replace(/\\div/g, "÷")
     .replace(/\\cdot/g, "·")
 
-    // Bold Markdown
+    // Markdown bold
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+
+    // Markdown italic
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
 
     // Line breaks
     .replace(/\n/g, "<br>");
   }
+    
 
     
       
