@@ -203,194 +203,234 @@
 
   <script>
 
-    const BACKEND_URL =
-      "https://eduagent-ai-osvz.onrender.com/ask";
+  const BACKEND_URL =
+    "https://eduagent-ai-osvz.onrender.com/ask";
 
 
-    async function askAgent() {
+  async function askAgent() {
 
-      const input =
-        document.getElementById("questionInput");
+    const input =
+      document.getElementById("questionInput");
 
-      const button =
-        document.getElementById("askButton");
+    const button =
+      document.getElementById("askButton");
 
-      const responseSection =
-        document.getElementById("responseSection");
+    const responseSection =
+      document.getElementById("responseSection");
 
-      const answerBox =
-        document.getElementById("answerBox");
+    const answerBox =
+      document.getElementById("answerBox");
 
-      const userStatus =
-        document.getElementById("userStatus");
+    const userStatus =
+      document.getElementById("userStatus");
 
-      const routerStatus =
-        document.getElementById("routerStatus");
+    const routerStatus =
+      document.getElementById("routerStatus");
 
-      const toolStatus =
-        document.getElementById("toolStatus");
+    const toolStatus =
+      document.getElementById("toolStatus");
 
-      const responseStatus =
-        document.getElementById("responseStatus");
-
-
-      const question =
-        input.value.trim();
+    const responseStatus =
+      document.getElementById("responseStatus");
 
 
-      if (!question) {
-        alert("Please enter a question.");
-        return;
+    const question =
+      input.value.trim();
+
+
+    if (!question) {
+      alert("Please enter a question.");
+      return;
+    }
+
+
+    button.disabled = true;
+    button.innerText = "Thinking...";
+
+    responseSection.style.display = "block";
+
+    answerBox.innerHTML =
+      "<p>🤔 EduAgent is processing your question...</p>";
+
+
+    /* Reset workflow */
+
+    userStatus.innerText = "⏳ Processing";
+    routerStatus.innerText = "Waiting";
+    toolStatus.innerText = "Waiting";
+    responseStatus.innerText = "Waiting";
+
+
+    try {
+
+      const response =
+        await fetch(BACKEND_URL, {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            question: question
+          })
+
+        });
+
+
+      if (!response.ok) {
+        throw new Error(
+          `Server error: ${response.status}`
+        );
       }
 
 
-      /* Start */
-
-      button.disabled = true;
-      button.innerText = "Thinking...";
-
-      responseSection.style.display = "block";
-
-      answerBox.innerHTML =
-        "<p>🤔 EduAgent is processing your question...</p>";
+      const data =
+        await response.json();
 
 
-      /* Workflow status */
+      console.log(
+        "EduAgent Response:",
+        data
+      );
+
+
+      /* User Query */
 
       userStatus.innerText =
         "✓ Received";
 
+
+      /* Router */
+
       routerStatus.innerText =
-        "⏳ Processing";
-
-      toolStatus.innerText =
-        "Waiting";
-
-      responseStatus.innerText =
-        "Waiting";
+        "✓ Completed";
 
 
-      try {
+      /*
+       * Find the actual tool.
+       * education_router is not shown
+       * as the selected tool.
+       */
 
-        const response =
-          await fetch(BACKEND_URL, {
-
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-              question: question
-            })
-
-          });
+      let actualTool = null;
 
 
-        if (!response.ok) {
+      if (
+        data.tool_trace &&
+        data.tool_trace.length > 0
+      ) {
 
-          throw new Error(
-            `Server error: ${response.status}`
+        actualTool =
+          data.tool_trace.find(
+            item =>
+              item.tool !== "education_router"
           );
 
-        }
+      }
 
 
-        const data =
-          await response.json();
+      /* Display actual tool */
+
+      if (actualTool) {
+
+        const toolNames = {
+
+          calculator:
+            "🧮 Calculator",
+
+          web_search:
+            "🔎 SerpApi",
+
+          quiz_generator:
+            "📝 Quiz Generator",
+
+          study_plan_generator:
+            "📅 Study Planner"
+
+        };
 
 
-        console.log(
-          "EduAgent Response:",
-          data
-        );
+        const displayName =
+          toolNames[actualTool.tool] ||
+          `🔧 ${actualTool.tool}`;
 
-
-        /* Router completed */
-
-        routerStatus.innerText =
-          "✓ Completed";
-
-
-        /* Detect tool */
-
-        if (
-          data.tool_trace &&
-          data.tool_trace.length > 0
-        ) {
-
-          const lastTool =
-            data.tool_trace[
-              data.tool_trace.length - 1
-            ];
-
-          toolStatus.innerText =
-            `✓ ${lastTool.tool}`;
-
-        } else {
-
-          toolStatus.innerText =
-            "✓ No tool required";
-
-        }
-
-
-        /* Final response */
-
-        responseStatus.innerText =
-          "✓ Generated";
-
-
-        answerBox.innerHTML =
-          `<div class="answer-content">
-            ${formatAnswer(data.answer)}
-          </div>`;
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        routerStatus.innerText =
-          "⚠ Error";
 
         toolStatus.innerText =
-          "⚠ Error";
+          `✓ ${displayName}`;
 
-        responseStatus.innerText =
-          "⚠ Failed";
+      } else {
 
-
-        answerBox.innerHTML =
-          `<p>
-            ❌ Unable to connect to EduAgent backend.
-          </p>`;
+        toolStatus.innerText =
+          "✓ Direct Answer";
 
       }
 
 
-      button.disabled = false;
-      button.innerText =
-        "Ask EduAgent";
+      /* Final response */
+
+      responseStatus.innerText =
+        "✓ Generated";
+
+
+      answerBox.innerHTML =
+        `<div class="answer-content">
+          ${formatAnswer(data.answer)}
+        </div>`;
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      routerStatus.innerText =
+        "⚠ Error";
+
+      toolStatus.innerText =
+        "⚠ Failed";
+
+      responseStatus.innerText =
+        "⚠ Failed";
+
+
+      answerBox.innerHTML =
+        `<p>
+          ❌ Unable to connect to EduAgent backend.
+        </p>`;
 
     }
 
 
-    function formatAnswer(answer) {
+    button.disabled = false;
 
-      if (!answer) {
-        return "No answer received.";
-      }
+    button.innerText =
+      "Ask EduAgent";
+
+  }
 
 
-      return answer
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\n/g, "<br>");
+  function formatAnswer(answer) {
 
+    if (!answer) {
+      return "No answer received.";
     }
+
+
+    return answer
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+
+  }
 
   </script>
+
+    
+    
+
+
+    
 
 </body>
 
