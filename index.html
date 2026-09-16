@@ -149,22 +149,73 @@
 
   <script>
 
-    async function askAgent() {
+  const BACKEND_URL =
+  "https://eduagent-ai-osvz.onrender.com/ask";
+    
 
-      const question =
-        document.getElementById("questionInput").value;
 
-      if (!question.trim()) {
-        alert("Please enter a question.");
-        return;
-      }
+  async function askAgent() {
 
-      alert(
-        "Frontend is ready! Backend connection will be added next."
-      );
+    const input =
+      document.getElementById("questionInput");
+
+    const question = input.value.trim();
+
+    if (!question) {
+      alert("Please enter a question.");
+      return;
     }
 
+
+    try {
+
+      const response = await fetch(BACKEND_URL, {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          question: question
+        })
+
+      });
+
+
+      if (!response.ok) {
+        throw new Error(
+          `Server error: ${response.status}`
+        );
+      }
+
+
+      const data = await response.json();
+
+
+      console.log("EduAgent Response:", data);
+
+      alert(data.answer);
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Unable to connect to EduAgent backend."
+      );
+
+    }
+
+  }
+
   </script>
+
+    
+
+      
 
 </body>
 </html>
