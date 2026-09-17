@@ -460,81 +460,157 @@ async function askAgent() {
 
 
     /* =====================================
-       SHOW ACTUAL TOOL CHAIN
-    ===================================== */
+   SHOW ACTUAL TOOL CHAIN
+===================================== */
 
-    if (actualTools.length > 0) {
+const toolNode =
+  document.getElementById("toolNode");
 
-      for (const tool of actualTools) {
+if (toolNode) {
 
-        const displayName =
-          toolNames[tool.tool] ||
-          `🔧 ${tool.tool}`;
+  const toolsParent =
+    toolNode.parentElement;
+
+  /*
+     Keep the original tool node
+     as the first dynamic tool node.
+  */
+
+  if (actualTools.length > 0) {
+
+    for (let i = 0; i < actualTools.length; i++) {
+
+      const tool =
+        actualTools[i];
+
+      const displayName =
+        toolNames[tool.tool] ||
+        `🔧 ${tool.tool}`;
 
 
-        /* ---------------------------------
-           TOOL RUNNING
-        --------------------------------- */
+      /* ---------------------------------
+         FIRST TOOL
+      --------------------------------- */
 
-        setNode(
-          "toolNode",
-          `⏳ ${displayName}`,
-          true
+      let currentNode;
+
+      if (i === 0) {
+
+        currentNode = toolNode;
+
+      } else {
+
+        /* Create arrow */
+
+        const arrow =
+          document.createElement("div");
+
+        arrow.className = "arrow";
+        arrow.innerText = "→";
+
+        toolsParent.appendChild(arrow);
+
+
+        /* Create new tool node */
+
+        currentNode =
+          document.createElement("div");
+
+        currentNode.className = "node";
+
+        currentNode.id =
+          `dynamicToolNode${i}`;
+
+        currentNode.innerHTML = `
+          <div class="node-title">
+            ${displayName}
+          </div>
+
+          <div class="node-status">
+            Waiting
+          </div>
+        `;
+
+        toolsParent.appendChild(
+          currentNode
+        );
+      }
+
+
+      /* ---------------------------------
+         UPDATE TOOL NODE
+      --------------------------------- */
+
+      const statusElement =
+        currentNode.querySelector(
+          ".node-status"
         );
 
 
-        await sleep(700);
+      currentNode.classList.remove(
+        "active",
+        "completed",
+        "error"
+      );
 
 
-        /* ---------------------------------
-           TOOL COMPLETE / ERROR
-        --------------------------------- */
+      statusElement.innerText =
+        `⏳ ${displayName}`;
 
-        if (
-          tool.status === "success"
-        ) {
-
-          setNode(
-            "toolNode",
-            `✓ ${displayName}`
-          );
-
-        } else {
-
-          setNode(
-            "toolNode",
-            `✗ ${displayName}`
-          );
-        }
+      currentNode.classList.add(
+        "active"
+      );
 
 
-        await sleep(400);
+      await sleep(700);
+
+
+      currentNode.classList.remove(
+        "active"
+      );
+
+
+      if (
+        tool.status === "success"
+      ) {
+
+        statusElement.innerText =
+          `✓ ${displayName}`;
+
+        currentNode.classList.add(
+          "completed"
+        );
+
+      } else {
+
+        statusElement.innerText =
+          `✗ ${displayName}`;
+
+        currentNode.classList.add(
+          "error"
+        );
       }
 
-    } else {
 
-      /* ---------------------------------
-         NO TOOL REQUIRED
-      --------------------------------- */
-
-      setNode(
-        "toolNode",
-        "⏳ Direct Answer",
-        true
-      );
-
-
-      await sleep(500);
-
-
-      setNode(
-        "toolNode",
-        "✓ Direct Answer"
-      );
-
-
-      await sleep(300);
+      await sleep(400);
     }
+
+  } else {
+
+    const statusElement =
+      toolNode.querySelector(
+        ".node-status"
+      );
+
+    statusElement.innerText =
+      "✓ Direct Answer";
+
+    toolNode.classList.add(
+      "completed"
+    );
+  }
+}
+          
 
 
     /* =====================================
