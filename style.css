@@ -281,7 +281,7 @@ body {
 
 
 /* =========================================
-   WORKFLOW NODES — DESKTOP
+   WORKFLOW NODES
 ========================================= */
 
 .nodes {
@@ -330,11 +330,6 @@ body {
     border-color 0.3s ease,
     background 0.3s ease;
 }
-
-
-/* =========================================
-   NODE HOVER
-========================================= */
 
 .node:hover {
   border-color: #7182ad;
@@ -433,7 +428,7 @@ body {
 
 
 /* =========================================
-   DESKTOP ARROWS
+   ARROWS
 ========================================= */
 
 .arrow {
@@ -447,9 +442,13 @@ body {
 
   font-weight: bold;
 
-  color: #6f7fa5;
+  color: #7c8cff;
 
-  display: inline-block;
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
 
   animation: arrowFlow 1.1s ease-in-out infinite;
 
@@ -458,7 +457,7 @@ body {
 
 @keyframes arrowFlow {
   0% {
-    opacity: 0.3;
+    opacity: 0.35;
 
     transform: translateX(0);
   }
@@ -473,7 +472,7 @@ body {
   }
 
   100% {
-    opacity: 0.3;
+    opacity: 0.35;
 
     transform: translateX(0);
   }
@@ -481,7 +480,7 @@ body {
 
 
 /* =========================================
-   WORKFLOW SCROLLBAR
+   SCROLLBAR
 ========================================= */
 
 .nodes::-webkit-scrollbar {
@@ -531,7 +530,7 @@ body {
 
 
 /* =========================================
-   MOBILE / TABLET WORKFLOW
+   MOBILE
 ========================================= */
 
 @media (max-width: 1000px) {
@@ -539,9 +538,6 @@ body {
   .app {
     flex-direction: column;
   }
-
-
-  /* Mobile Navigation */
 
   .sidebar {
     width: 100%;
@@ -570,17 +566,11 @@ body {
     font-size: 12px;
   }
 
-
-  /* Main */
-
   .main {
     width: 100%;
 
     padding: 12px;
   }
-
-
-  /* Topbar */
 
   .topbar {
     align-items: flex-start;
@@ -602,9 +592,6 @@ body {
     padding: 7px 9px;
   }
 
-
-  /* Hero */
-
   .hero {
     padding: 18px;
   }
@@ -617,9 +604,6 @@ body {
     font-size: 13px;
   }
 
-
-  /* Input */
-
   .input-area {
     flex-direction: column;
   }
@@ -627,9 +611,6 @@ body {
   .input-area button {
     padding: 14px;
   }
-
-
-  /* Workflow */
 
   .workflow {
     padding: 16px;
@@ -641,32 +622,40 @@ body {
 
 
   /* =====================================
-     VERTICAL MOBILE WORKFLOW
+     HORIZONTAL N8N WORKFLOW
   ===================================== */
 
   .nodes {
     display: flex;
 
-    flex-direction: column;
+    flex-direction: row;
 
-    align-items: stretch;
+    align-items: center;
 
     justify-content: flex-start;
 
+    gap: 12px;
+
     width: 100%;
 
-    overflow: visible;
+    overflow-x: auto;
 
-    padding: 8px 0;
+    overflow-y: hidden;
+
+    padding: 12px 5px 20px;
+
+    scroll-behavior: smooth;
+
+    -webkit-overflow-scrolling: touch;
   }
 
 
-  /* Mobile Nodes */
-
   .node {
-    width: 100%;
+    flex: 0 0 230px;
 
-    min-width: 0;
+    width: 230px;
+
+    min-width: 230px;
 
     min-height: 82px;
 
@@ -682,57 +671,36 @@ body {
   }
 
 
-  /* =====================================
-     VERTICAL ANIMATED ARROWS
-  ===================================== */
+  /* Horizontal animated arrows */
 
   .arrow {
-    display: block;
+    display: flex;
 
-    width: 100%;
+    flex: 0 0 35px;
 
-    min-width: 100%;
+    width: 35px;
 
-    height: 38px;
+    min-width: 35px;
 
-    line-height: 38px;
+    height: 50px;
+
+    align-items: center;
+
+    justify-content: center;
 
     text-align: center;
 
-    font-size: 25px;
+    font-size: 28px;
 
     font-weight: bold;
 
-    color: #6f7fa5;
+    color: #7c8cff;
 
-    animation: arrowDown 1.1s ease-in-out infinite;
+    animation: arrowFlow 1.1s ease-in-out infinite;
 
-    user-select: none;
-  }
+    opacity: 1;
 
-  @keyframes arrowDown {
-
-    0% {
-      opacity: 0.3;
-
-      transform: translateY(0);
-    }
-
-    50% {
-      opacity: 1;
-
-      transform: translateY(6px);
-
-      text-shadow:
-        0 0 10px rgba(124, 140, 255, 0.55);
-    }
-
-    100% {
-      opacity: 0.3;
-
-      transform: translateY(0);
-    }
-
+    visibility: visible;
   }
 
 }
@@ -775,10 +743,20 @@ body {
   }
 
   .nodes {
-    gap: 0;
+    gap: 8px;
+
+    padding-left: 3px;
+
+    padding-right: 3px;
   }
 
   .node {
+    flex: 0 0 210px;
+
+    width: 210px;
+
+    min-width: 210px;
+
     min-height: 78px;
 
     padding: 11px;
@@ -793,17 +771,21 @@ body {
   }
 
   .arrow {
-    height: 34px;
+    flex: 0 0 30px;
 
-    line-height: 34px;
+    width: 30px;
 
-    font-size: 22px;
+    min-width: 30px;
+
+    height: 40px;
+
+    font-size: 24px;
   }
 }
 
 
 /* =========================================
-   REDUCED MOTION ACCESSIBILITY
+   REDUCED MOTION
 ========================================= */
 
 @media (prefers-reduced-motion: reduce) {
@@ -818,42 +800,6 @@ body {
     scroll-behavior: auto !important;
 
     transition-duration: 0.01ms !important;
-  }
-
-}
-
-/* ===== MOBILE N8N STYLE WORKFLOW FIX ===== */
-
-@media (max-width: 1000px) {
-
-  .nodes {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 12px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    padding: 10px 5px 18px !important;
-    scroll-behavior: smooth;
-  }
-
-  .node {
-    flex: 0 0 230px !important;
-    min-width: 230px !important;
-  }
-
-  .arrow {
-    display: flex !important;
-    flex: 0 0 35px !important;
-    width: 35px !important;
-    min-width: 35px !important;
-    height: 50px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 28px !important;
-    font-weight: bold !important;
-    opacity: 1 !important;
-    visibility: visible !important;
   }
 
 }
