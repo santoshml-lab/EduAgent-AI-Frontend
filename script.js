@@ -46,7 +46,8 @@ function setNode(nodeId, status, active = false) {
   } else if (
     status.includes("⚠") ||
     status.includes("Failed") ||
-    status.includes("Error")
+    status.includes("Error") ||
+    status.includes("✗")
   ) {
 
     node.classList.add("error");
@@ -418,85 +419,119 @@ async function askAgent() {
 
 
     /* =====================================
-   DETECT ACTUAL TOOLS
-===================================== */
+       DETECT ACTUAL TOOLS
+    ===================================== */
 
-const toolNames = {
+    const toolNames = {
 
-  calculator:
-    "🧮 Calculator",
+      calculator:
+        "🧮 Calculator",
 
-  web_search:
-    "🔎 SerpApi",
+      web_search:
+        "🔎 SerpApi",
 
-  quiz_generator:
-    "📝 Quiz Generator",
+      quiz_generator:
+        "📝 Quiz Generator",
 
-  study_plan_generator:
-    "📅 Study Planner"
-};
-
-
-const actualTools =
-  Array.isArray(data.tool_trace)
-    ? data.tool_trace.filter(
-        item =>
-          item.tool !==
-          "education_router"
-      )
-    : [];
+      study_plan_generator:
+        "📅 Study Planner"
+    };
 
 
-/* =====================================
-   SHOW ACTUAL TOOL CHAIN
-===================================== */
+    /*
+       IMPORTANT:
+       education_router and final_response
+       are NOT displayed as normal tools.
+    */
 
-if (actualTools.length > 0) {
-
-  for (const tool of actualTools) {
-
-    const displayName =
-      toolNames[tool.tool] ||
-      `🔧 ${tool.tool}`;
-
-
-    setNode(
-      "toolNode",
-      `⏳ ${displayName}`,
-      true
-    );
+    const actualTools =
+      Array.isArray(data.tool_trace)
+        ? data.tool_trace.filter(
+            item =>
+              item.tool !==
+                "education_router" &&
+              item.tool !==
+                "final_response"
+          )
+        : [];
 
 
-    await sleep(700);
+    /* =====================================
+       SHOW ACTUAL TOOL CHAIN
+    ===================================== */
+
+    if (actualTools.length > 0) {
+
+      for (const tool of actualTools) {
+
+        const displayName =
+          toolNames[tool.tool] ||
+          `🔧 ${tool.tool}`;
 
 
-    setNode(
-      "toolNode",
-      `✓ ${displayName}`
-    );
+        /* ---------------------------------
+           TOOL RUNNING
+        --------------------------------- */
+
+        setNode(
+          "toolNode",
+          `⏳ ${displayName}`,
+          true
+        );
 
 
-    await sleep(300);
-  }
-
-} else {
-
-  setNode(
-    "toolNode",
-    "⏳ Direct Answer",
-    true
-  );
+        await sleep(700);
 
 
-  await sleep(500);
+        /* ---------------------------------
+           TOOL COMPLETE / ERROR
+        --------------------------------- */
+
+        if (
+          tool.status === "success"
+        ) {
+
+          setNode(
+            "toolNode",
+            `✓ ${displayName}`
+          );
+
+        } else {
+
+          setNode(
+            "toolNode",
+            `✗ ${displayName}`
+          );
+        }
 
 
-  setNode(
-    "toolNode",
-    "✓ Direct Answer"
-  );
-}
-        
+        await sleep(400);
+      }
+
+    } else {
+
+      /* ---------------------------------
+         NO TOOL REQUIRED
+      --------------------------------- */
+
+      setNode(
+        "toolNode",
+        "⏳ Direct Answer",
+        true
+      );
+
+
+      await sleep(500);
+
+
+      setNode(
+        "toolNode",
+        "✓ Direct Answer"
+      );
+
+
+      await sleep(300);
+    }
 
 
     /* =====================================
