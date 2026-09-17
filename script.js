@@ -1,17 +1,12 @@
 const BACKEND_URL =
   "https://eduagent-ai-osvz.onrender.com/ask";
 
-
-/* =========================================
-   HELPER
-========================================= */
-
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
 
 /* =========================================
-   NODE STATE
+   WORKFLOW NODE CONTROL
 ========================================= */
 
 function setNode(nodeId, status, active = false) {
@@ -23,8 +18,6 @@ function setNode(nodeId, status, active = false) {
   const statusElement =
     node.querySelector(".node-status");
 
-  if (!statusElement) return;
-
   statusElement.innerText = status;
 
   node.classList.remove(
@@ -33,19 +26,7 @@ function setNode(nodeId, status, active = false) {
     "error"
   );
 
-
-  /* Active */
-
-  if (active) {
-
-    node.classList.add("active");
-
-  }
-
-
-  /* Completed */
-
-  else if (
+  if (
     status.includes("✓") ||
     status.includes("Completed") ||
     status.includes("Received") ||
@@ -54,20 +35,17 @@ function setNode(nodeId, status, active = false) {
 
     node.classList.add("completed");
 
-  }
-
-
-  /* Error */
-
-  else if (
+  } else if (
     status.includes("⚠") ||
     status.includes("Failed")
   ) {
 
     node.classList.add("error");
 
-  }
+  } else if (active) {
 
+    node.classList.add("active");
+  }
 }
 
 
@@ -77,26 +55,13 @@ function setNode(nodeId, status, active = false) {
 
 function resetWorkflow() {
 
-  setNode(
-    "userNode",
-    "Waiting"
-  );
+  setNode("userNode", "Waiting");
 
-  setNode(
-    "routerNode",
-    "Waiting"
-  );
+  setNode("routerNode", "Waiting");
 
-  setNode(
-    "toolNode",
-    "Waiting"
-  );
+  setNode("toolNode", "Waiting");
 
-  setNode(
-    "responseNode",
-    "Waiting"
-  );
-
+  setNode("responseNode", "Waiting");
 }
 
 
@@ -118,7 +83,6 @@ async function askAgent() {
   const answerBox =
     document.getElementById("answerBox");
 
-
   const question =
     input.value.trim();
 
@@ -128,7 +92,6 @@ async function askAgent() {
     alert("Please enter a question.");
 
     return;
-
   }
 
 
@@ -142,8 +105,15 @@ async function askAgent() {
     "block";
 
 
-  answerBox.innerHTML =
-    "<p>🤔 EduAgent is thinking...</p>";
+  answerBox.innerHTML = `
+    <div class="ai-loading">
+      <span>🤔</span>
+      <div>
+        <strong>EduAgent is thinking...</strong>
+        <small>Analyzing your question</small>
+      </div>
+    </div>
+  `;
 
 
   resetWorkflow();
@@ -151,13 +121,11 @@ async function askAgent() {
 
   try {
 
-    /* =====================================
-       STEP 1 — USER QUERY
-    ===================================== */
+    /* USER */
 
     setNode(
       "userNode",
-      "⏳ Processing...",
+      "⏳ Processing",
       true
     );
 
@@ -169,9 +137,7 @@ async function askAgent() {
     );
 
 
-    /* =====================================
-       STEP 2 — EDUCATION ROUTER
-    ===================================== */
+    /* ROUTER */
 
     setNode(
       "routerNode",
@@ -180,9 +146,7 @@ async function askAgent() {
     );
 
 
-    /* =====================================
-       BACKEND REQUEST
-    ===================================== */
+    /* BACKEND */
 
     const response =
       await fetch(BACKEND_URL, {
@@ -190,13 +154,13 @@ async function askAgent() {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":
+            "application/json"
         },
 
         body: JSON.stringify({
           question: question
         })
-
       });
 
 
@@ -205,7 +169,6 @@ async function askAgent() {
       throw new Error(
         `Server error: ${response.status}`
       );
-
     }
 
 
@@ -213,20 +176,19 @@ async function askAgent() {
       await response.json();
 
 
-    /* =====================================
-       ROUTER COMPLETED
-    ===================================== */
+    /* ROUTER COMPLETE */
 
     setNode(
       "routerNode",
       "✓ Completed"
     );
 
+
     await sleep(400);
 
 
     /* =====================================
-       STEP 3 — TOOL
+       DETECT ACTUAL TOOL
     ===================================== */
 
     let actualTool = null;
@@ -240,9 +202,9 @@ async function askAgent() {
       actualTool =
         data.tool_trace.find(
           item =>
-            item.tool !== "education_router"
+            item.tool !==
+            "education_router"
         );
-
     }
 
 
@@ -259,9 +221,10 @@ async function askAgent() {
 
       study_plan_generator:
         "📅 Study Planner"
-
     };
 
+
+    /* TOOL NODE */
 
     if (actualTool) {
 
@@ -280,30 +243,12 @@ async function askAgent() {
       await sleep(700);
 
 
-      if (actualTool.status === "error") {
+      setNode(
+        "toolNode",
+        `✓ ${displayName}`
+      );
 
-        setNode(
-          "toolNode",
-          `⚠ ${displayName} Failed`
-        );
-
-      } else {
-
-        setNode(
-          "toolNode",
-          `✓ ${displayName}`
-        );
-
-      }
-
-    }
-
-
-    /* =====================================
-       DIRECT ANSWER
-    ===================================== */
-
-    else {
+    } else {
 
       setNode(
         "toolNode",
@@ -319,13 +264,10 @@ async function askAgent() {
         "toolNode",
         "✓ Direct Answer"
       );
-
     }
 
 
-    /* =====================================
-       STEP 4 — AI RESPONSE
-    ===================================== */
+    /* RESPONSE */
 
     setNode(
       "responseNode",
@@ -334,7 +276,7 @@ async function askAgent() {
     );
 
 
-    await sleep(700);
+    await sleep(600);
 
 
     setNode(
@@ -344,28 +286,35 @@ async function askAgent() {
 
 
     /* =====================================
-       SHOW ANSWER
+       PREMIUM AI RESPONSE
     ===================================== */
 
-    answerBox.innerHTML =
-      `<div class="answer-content">
+    answerBox.innerHTML = `
+      <div class="answer-header">
+        <div class="ai-avatar">🧠</div>
+
+        <div>
+          <div class="answer-title">
+            EduAgent AI
+          </div>
+
+          <div class="answer-subtitle">
+            Intelligent education response
+          </div>
+        </div>
+      </div>
+
+      <div class="answer-divider"></div>
+
+      <div class="answer-content">
         ${formatAnswer(data.answer)}
-      </div>`;
+      </div>
+    `;
 
 
-  }
+  } catch (error) {
 
-
-  /* =======================================
-     ERROR HANDLING
-  ======================================= */
-
-  catch (error) {
-
-    console.error(
-      "EduAgent Error:",
-      error
-    );
+    console.error(error);
 
 
     setNode(
@@ -373,12 +322,10 @@ async function askAgent() {
       "⚠ Error"
     );
 
-
     setNode(
       "toolNode",
       "⚠ Failed"
     );
-
 
     setNode(
       "responseNode",
@@ -386,23 +333,32 @@ async function askAgent() {
     );
 
 
-    answerBox.innerHTML =
-      `<p>
-        ❌ Unable to connect to EduAgent backend.
-      </p>`;
+    answerBox.innerHTML = `
+      <div class="error-card">
 
+        <div class="error-icon">
+          ⚠️
+        </div>
+
+        <div>
+          <strong>
+            Unable to connect to EduAgent
+          </strong>
+
+          <p>
+            Please try again in a moment.
+          </p>
+        </div>
+
+      </div>
+    `;
   }
 
-
-  /* =====================================
-     RESTORE BUTTON
-  ===================================== */
 
   button.disabled = false;
 
   button.innerText =
     "Ask EduAgent";
-
 }
 
 
@@ -414,77 +370,99 @@ function formatAnswer(answer) {
 
   if (!answer) {
 
-    return "No answer received.";
-
+    return `
+      <p>
+        No answer received.
+      </p>
+    `;
   }
 
 
-  return answer
+  /* Escape HTML first */
 
-    /* Math delimiters */
+  let text =
+    answer
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
 
-    .replace(/\\\[/g, "")
-    .replace(/\\\]/g, "")
-    .replace(/\\\(/g, "")
-    .replace(/\\\)/g, "")
 
-    /* Math symbols */
+  /* Markdown bold */
 
-    .replace(/\\times/g, "×")
-    .replace(/\\div/g, "÷")
-    .replace(/\\cdot/g, "·")
-
-    /* Bold */
-
-    .replace(
+  text =
+    text.replace(
       /\*\*(.*?)\*\*/g,
       "<strong>$1</strong>"
-    )
+    );
 
-    /* Italic */
 
-    .replace(
-      /\*(.*?)\*/g,
+  /* Markdown italic */
+
+  text =
+    text.replace(
+      /(?<!\*)\*(.*?)\*(?!\*)/g,
       "<em>$1</em>"
-    )
+    );
 
-    /* New lines */
 
-    .replace(
+  /* Horizontal divider */
+
+  text =
+    text.replace(
+      /^---$/gm,
+      "<hr>"
+    );
+
+
+  /* Bullet points */
+
+  text =
+    text.replace(
+      /^[•\-] (.*)$/gm,
+      "<div class=\"answer-bullet\">$1</div>"
+    );
+
+
+  /* Numbered points */
+
+  text =
+    text.replace(
+      /^\d+\.\s+(.*)$/gm,
+      "<div class=\"answer-number\">$1</div>"
+    );
+
+
+  /* Headings */
+
+  text =
+    text.replace(
+      /^### (.*)$/gm,
+      "<h4>$1</h4>"
+    );
+
+
+  text =
+    text.replace(
+      /^## (.*)$/gm,
+      "<h3>$1</h3>"
+    );
+
+
+  text =
+    text.replace(
+      /^# (.*)$/gm,
+      "<h2>$1</h2>"
+    );
+
+
+  /* Line breaks */
+
+  text =
+    text.replace(
       /\n/g,
       "<br>"
     );
 
+
+  return text;
 }
-
-
-/* =========================================
-   ENTER KEY SUPPORT
-========================================= */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    const input =
-      document.getElementById("questionInput");
-
-
-    if (!input) return;
-
-
-    input.addEventListener(
-      "keydown",
-      (event) => {
-
-        if (event.key === "Enter") {
-
-          askAgent();
-
-        }
-
-      }
-    );
-
-  }
-);
