@@ -574,6 +574,24 @@ function formatAnswer(answer) {
     /^---$/gm,
     "<hr>"
   );
+  /* =====================================
+   MARKDOWN LINKS
+===================================== */
+
+text = text.replace(
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+  '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+);
+
+
+/* =====================================
+   PLAIN URLs
+===================================== */
+
+text = text.replace(
+  /(^|[\s>])(https?:\/\/[^\s<]+)/gm,
+  '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>'
+);
 
 
   /* =====================================
