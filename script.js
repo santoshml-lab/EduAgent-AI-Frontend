@@ -364,8 +364,10 @@ async function askAgent() {
 
 /* =========================================
    FORMAT AI ANSWER
-========================================= 
+========================================= */
+
 function formatAnswer(answer) {
+   
 
   if (!answer) {
     return "<p>No answer received.</p>";
