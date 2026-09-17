@@ -1,5 +1,34 @@
 const BACKEND_URL =
   "https://eduagent-ai-osvz.onrender.com/ask";
+// ============================================================
+// Conversation Session
+// ============================================================
+
+const SESSION_KEY = "eduagent_session_id";
+
+function getSessionId() {
+
+    let sessionId = localStorage.getItem(
+        SESSION_KEY
+    );
+
+    if (!sessionId) {
+
+        sessionId =
+            (crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random()
+                    .toString(36)
+                    .substring(2)}`;
+
+        localStorage.setItem(
+            SESSION_KEY,
+            sessionId
+        );
+    }
+
+    return sessionId;
+}
 
 
 /* =========================================
