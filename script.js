@@ -826,53 +826,25 @@ function formatAnswer(answer) {
 
 
   /* =====================================
-     MARKDOWN LINKS
-  ===================================== */
+   MARKDOWN LINKS
+===================================== */
 
-  text = text.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-    function(match, label, url) {
+text = text.replace(
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+  function(match, label, url) {
 
-      if (!isSafeURL(url)) {
-        return label;
-      }
-
-      return `
-        <a
-          href="${url}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ${label}
-        </a>
-      `;
+    if (!isSafeURL(url)) {
+      return label;
     }
-  );
+
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  }
+);
+     
+  
 
 
-  /* =====================================
-     PLAIN URLs
-  ===================================== */
-
-  text = text.replace(
-    /(^|[\s>])(https?:\/\/[^\s<]+)/gm,
-    function(match, prefix, url) {
-
-      if (!isSafeURL(url)) {
-        return match;
-      }
-
-      return `
-        ${prefix}<a
-          href="${url}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ${url}
-        </a>
-      `;
-    }
-  );
+  
 
 
   /* =====================================
