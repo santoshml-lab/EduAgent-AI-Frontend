@@ -18,6 +18,8 @@ function setNode(nodeId, status, active = false) {
   const statusElement =
     node.querySelector(".node-status");
 
+  if (!statusElement) return;
+
   statusElement.innerText = status;
 
   node.classList.remove(
@@ -37,7 +39,8 @@ function setNode(nodeId, status, active = false) {
 
   } else if (
     status.includes("⚠") ||
-    status.includes("Failed")
+    status.includes("Failed") ||
+    status.includes("Error")
   ) {
 
     node.classList.add("error");
@@ -62,6 +65,147 @@ function resetWorkflow() {
   setNode("toolNode", "Waiting");
 
   setNode("responseNode", "Waiting");
+}
+
+
+/* =========================================
+   SAFE HTML ESCAPE
+========================================= */
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================
+   SAFE URL CHECK
+========================================= */
+
+function isSafeURL(url) {
+
+  try {
+
+    const parsed = new URL(url);
+
+    return (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:"
+    );
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+/* =========================================
+   SOURCE PANEL
+========================================= */
+
+function formatSources(sources) {
+
+  if (
+    !Array.isArray(sources) ||
+    sources.length === 0
+  ) {
+
+    return "";
+  }
+
+
+  let html = `
+    <div class="sources-panel">
+
+      <div class="sources-header">
+
+        <div class="sources-icon">
+          🔎
+        </div>
+
+        <div>
+
+          <div class="sources-title">
+            Sources
+          </div>
+
+          <div class="sources-subtitle">
+            Retrieved from live web search
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="sources-list">
+  `;
+
+
+  sources.forEach((source, index) => {
+
+    const title =
+      escapeHTML(
+        source.title ||
+        `Source ${index + 1}`
+      );
+
+
+    const url =
+      source.url || "";
+
+
+    if (!isSafeURL(url)) {
+      return;
+    }
+
+
+    const safeURL =
+      escapeHTML(url);
+
+
+    html += `
+      <div class="source-card">
+
+        <div class="source-number">
+          ${String(index + 1).padStart(2, "0")}
+        </div>
+
+        <div class="source-info">
+
+          <div class="source-title">
+            ${title}
+          </div>
+
+          <a
+            class="source-link"
+            href="${safeURL}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open Source ↗
+          </a>
+
+        </div>
+
+      </div>
+    `;
+  });
+
+
+  html += `
+      </div>
+
+    </div>
+  `;
+
+
+  return html;
 }
 
 
@@ -107,11 +251,21 @@ async function askAgent() {
 
   answerBox.innerHTML = `
     <div class="ai-loading">
+
       <span>🤔</span>
+
       <div>
-        <strong>EduAgent is thinking...</strong>
-        <small>Analyzing your question</small>
+
+        <strong>
+          EduAgent is thinking...
+        </strong>
+
+        <small>
+          Analyzing your question
+        </small>
+
       </div>
+
     </div>
   `;
 
@@ -121,7 +275,9 @@ async function askAgent() {
 
   try {
 
-    /* USER */
+    /* =====================================
+       USER
+    ===================================== */
 
     setNode(
       "userNode",
@@ -131,13 +287,16 @@ async function askAgent() {
 
     await sleep(500);
 
+
     setNode(
       "userNode",
       "✓ Received"
     );
 
 
-    /* ROUTER */
+    /* =====================================
+       ROUTER
+    ===================================== */
 
     setNode(
       "routerNode",
@@ -146,22 +305,26 @@ async function askAgent() {
     );
 
 
-    /* BACKEND */
+    /* =====================================
+       BACKEND REQUEST
+    ===================================== */
 
     const response =
-      await fetch(BACKEND_URL, {
+      await fetch(
+        BACKEND_URL,
+        {
+          method: "POST",
 
-        method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-          question: question
-        })
-      });
+          body: JSON.stringify({
+            question: question
+          })
+        }
+      );
 
 
     if (!response.ok) {
@@ -176,7 +339,9 @@ async function askAgent() {
       await response.json();
 
 
-    /* ROUTER COMPLETE */
+    /* =====================================
+       ROUTER COMPLETE
+    ===================================== */
 
     setNode(
       "routerNode",
@@ -224,7 +389,9 @@ async function askAgent() {
     };
 
 
-    /* TOOL NODE */
+    /* =====================================
+       TOOL NODE
+    ===================================== */
 
     if (actualTool) {
 
@@ -267,7 +434,9 @@ async function askAgent() {
     }
 
 
-    /* RESPONSE */
+    /* =====================================
+       RESPONSE NODE
+    ===================================== */
 
     setNode(
       "responseNode",
@@ -290,10 +459,15 @@ async function askAgent() {
     ===================================== */
 
     answerBox.innerHTML = `
+
       <div class="answer-header">
-        <div class="ai-avatar">🧠</div>
+
+        <div class="ai-avatar">
+          🧠
+        </div>
 
         <div>
+
           <div class="answer-title">
             EduAgent AI
           </div>
@@ -301,14 +475,24 @@ async function askAgent() {
           <div class="answer-subtitle">
             Intelligent education response
           </div>
+
         </div>
+
       </div>
+
 
       <div class="answer-divider"></div>
 
+
       <div class="answer-content">
+
         ${formatAnswer(data.answer)}
+
       </div>
+
+
+      ${formatSources(data.sources)}
+
     `;
 
 
@@ -334,6 +518,7 @@ async function askAgent() {
 
 
     answerBox.innerHTML = `
+
       <div class="error-card">
 
         <div class="error-icon">
@@ -341,6 +526,7 @@ async function askAgent() {
         </div>
 
         <div>
+
           <strong>
             Unable to connect to EduAgent
           </strong>
@@ -348,9 +534,11 @@ async function askAgent() {
           <p>
             Please try again in a moment.
           </p>
+
         </div>
 
       </div>
+
     `;
   }
 
@@ -369,20 +557,28 @@ async function askAgent() {
 function formatAnswer(answer) {
 
   if (!answer) {
+
     return "<p>No answer received.</p>";
   }
 
-  /* Escape HTML */
-  let text = answer
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 
-  const lines = text.split("\n");
+  /* =====================================
+     ESCAPE HTML
+  ===================================== */
+
+  let text = escapeHTML(answer);
+
+
+  const lines =
+    text.split("\n");
+
 
   let output = "";
+
   let tableRows = [];
+
   let insideTable = false;
+
 
   /* =====================================
      RENDER TABLE
@@ -391,58 +587,89 @@ function formatAnswer(answer) {
   function renderTable(rows) {
 
     if (rows.length < 2) {
+
       return rows.join("");
     }
 
-    const header = rows[0]
-      .split("|")
-      .map(cell => cell.trim())
-      .filter(cell => cell !== "");
 
-    const bodyRows = rows
-      .slice(2)
-      .map(row =>
-        row
-          .split("|")
-          .map(cell => cell.trim())
-          .filter(cell => cell !== "")
-      );
+    const header =
+      rows[0]
+        .split("|")
+        .map(cell => cell.trim())
+        .filter(cell => cell !== "");
+
+
+    const bodyRows =
+      rows
+        .slice(2)
+        .map(row =>
+          row
+            .split("|")
+            .map(cell => cell.trim())
+            .filter(cell => cell !== "")
+        );
+
 
     let table = `
+
       <div class="ai-table-wrapper">
+
         <table class="ai-table">
+
           <thead>
+
             <tr>
     `;
 
+
     header.forEach(cell => {
-      table += `<th>${cell}</th>`;
+
+      table += `
+        <th>${cell}</th>
+      `;
     });
 
+
     table += `
+
             </tr>
+
           </thead>
+
           <tbody>
     `;
+
 
     bodyRows.forEach(row => {
 
       if (!row.length) return;
 
+
       table += "<tr>";
 
+
       row.forEach(cell => {
-        table += `<td>${cell}</td>`;
+
+        table += `
+          <td>${cell}</td>
+        `;
       });
+
 
       table += "</tr>";
     });
 
+
     table += `
+
           </tbody>
+
         </table>
+
       </div>
+
     `;
+
 
     return table;
   }
@@ -454,9 +681,13 @@ function formatAnswer(answer) {
 
   lines.forEach(line => {
 
-    const trimmed = line.trim();
+    const trimmed =
+      line.trim();
 
-    /* Table line */
+
+    /* ===================================
+       TABLE LINE
+    =================================== */
 
     if (
       trimmed.startsWith("|") &&
@@ -464,9 +695,12 @@ function formatAnswer(answer) {
     ) {
 
       if (!insideTable) {
+
         insideTable = true;
+
         tableRows = [];
       }
+
 
       tableRows.push(trimmed);
 
@@ -474,36 +708,49 @@ function formatAnswer(answer) {
     }
 
 
-    /* Finish table */
+    /* ===================================
+       FINISH TABLE
+    =================================== */
 
     if (insideTable) {
 
-      output += renderTable(tableRows);
+      output +=
+        renderTable(tableRows);
 
       tableRows = [];
+
       insideTable = false;
     }
 
 
-    /* Ignore empty lines */
+    /* ===================================
+       IGNORE EMPTY LINES
+    =================================== */
 
     if (trimmed === "") {
+
       return;
     }
 
 
-    output += line + "\n";
+    output +=
+      line + "\n";
   });
 
 
-  /* Final table */
+  /* =====================================
+     FINAL TABLE
+  ===================================== */
 
   if (insideTable) {
-    output += renderTable(tableRows);
+
+    output +=
+      renderTable(tableRows);
   }
 
 
-  text = output.trim();
+  text =
+    output.trim();
 
 
   /* =====================================
@@ -515,10 +762,12 @@ function formatAnswer(answer) {
     "<h4>$1</h4>"
   );
 
+
   text = text.replace(
     /^##\s+(.*)$/gm,
     "<h3>$1</h3>"
   );
+
 
   text = text.replace(
     /^#\s+(.*)$/gm,
@@ -574,24 +823,56 @@ function formatAnswer(answer) {
     /^---$/gm,
     "<hr>"
   );
+
+
   /* =====================================
-   MARKDOWN LINKS
-===================================== */
+     MARKDOWN LINKS
+  ===================================== */
 
-text = text.replace(
-  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-  '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-);
+  text = text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    function(match, label, url) {
+
+      if (!isSafeURL(url)) {
+        return label;
+      }
+
+      return `
+        <a
+          href="${url}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ${label}
+        </a>
+      `;
+    }
+  );
 
 
-/* =====================================
-   PLAIN URLs
-===================================== */
+  /* =====================================
+     PLAIN URLs
+  ===================================== */
 
-text = text.replace(
-  /(^|[\s>])(https?:\/\/[^\s<]+)/gm,
-  '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>'
-);
+  text = text.replace(
+    /(^|[\s>])(https?:\/\/[^\s<]+)/gm,
+    function(match, prefix, url) {
+
+      if (!isSafeURL(url)) {
+        return match;
+      }
+
+      return `
+        ${prefix}<a
+          href="${url}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ${url}
+        </a>
+      `;
+    }
+  );
 
 
   /* =====================================
@@ -609,22 +890,42 @@ text = text.replace(
   ===================================== */
 
   text = text
-    .replace(/(<br>)+<h/g, "<h")
-    .replace(/<\/h2>(<br>)+/g, "</h2>")
-    .replace(/<\/h3>(<br>)+/g, "</h3>")
-    .replace(/<\/h4>(<br>)+/g, "</h4>")
+
+    .replace(
+      /(<br>)+<h/g,
+      "<h"
+    )
+
+    .replace(
+      /<\/h2>(<br>)+/g,
+      "</h2>"
+    )
+
+    .replace(
+      /<\/h3>(<br>)+/g,
+      "</h3>"
+    )
+
+    .replace(
+      /<\/h4>(<br>)+/g,
+      "</h4>"
+    )
+
     .replace(
       /(<br>)+<div class="ai-table-wrapper">/g,
       '<div class="ai-table-wrapper">'
     )
+
     .replace(
       /<\/div>(<br>)+/g,
       "</div>"
     )
+
     .replace(
       /(<br>)+$/g,
       ""
     );
+
 
   return text;
 }
