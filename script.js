@@ -364,105 +364,234 @@ async function askAgent() {
 
 /* =========================================
    FORMAT AI ANSWER
-========================================= */
-
+========================================= 
 function formatAnswer(answer) {
 
   if (!answer) {
+    return "<p>No answer received.</p>";
+  }
 
-    return `
-      <p>
-        No answer received.
-      </p>
+  /* Escape HTML */
+  let text = answer
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+
+  /* =====================================
+     MARKDOWN TABLES
+  ===================================== */
+
+  const lines = text.split("\n");
+
+  let output = "";
+  let tableRows = [];
+  let insideTable = false;
+
+  function renderTable(rows) {
+
+    if (rows.length < 2) {
+      return rows.join("<br>");
+    }
+
+    const header = rows[0]
+      .split("|")
+      .map(cell => cell.trim())
+      .filter(cell => cell !== "");
+
+    const bodyRows = rows
+      .slice(2)
+      .map(row =>
+        row
+          .split("|")
+          .map(cell => cell.trim())
+          .filter(cell => cell !== "")
+      );
+
+    let table = `
+      <div class="ai-table-wrapper">
+        <table class="ai-table">
+          <thead>
+            <tr>
     `;
+
+    header.forEach(cell => {
+      table += `<th>${cell}</th>`;
+    });
+
+    table += `
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    bodyRows.forEach(row => {
+
+      if (row.length === 0) return;
+
+      table += "<tr>";
+
+      row.forEach(cell => {
+        table += `<td>${cell}</td>`;
+      });
+
+      table += "</tr>";
+    });
+
+    table += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    return table;
   }
 
 
-  /* Escape HTML first */
+  lines.forEach(line => {
 
-  let text =
-    answer
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    const trimmed = line.trim();
 
+    /* Detect table */
+    if (
+      trimmed.startsWith("|") &&
+      trimmed.endsWith("|")
+    ) {
 
-  /* Markdown bold */
+      if (!insideTable) {
 
-  text =
-    text.replace(
-      /\*\*(.*?)\*\*/g,
-      "<strong>$1</strong>"
-    );
+        insideTable = true;
+        tableRows = [];
+      }
 
+      tableRows.push(trimmed);
 
-  /* Markdown italic */
-
-  text =
-    text.replace(
-      /(?<!\*)\*(.*?)\*(?!\*)/g,
-      "<em>$1</em>"
-    );
+      return;
+    }
 
 
-  /* Horizontal divider */
+    /* Table ended */
 
-  text =
-    text.replace(
-      /^---$/gm,
-      "<hr>"
-    );
+    if (insideTable) {
 
+      output += renderTable(tableRows);
 
-  /* Bullet points */
+      tableRows = [];
 
-  text =
-    text.replace(
-      /^[•\-] (.*)$/gm,
-      "<div class=\"answer-bullet\">$1</div>"
-    );
+      insideTable = false;
+    }
 
 
-  /* Numbered points */
+    /* Normal line */
 
-  text =
-    text.replace(
-      /^\d+\.\s+(.*)$/gm,
-      "<div class=\"answer-number\">$1</div>"
-    );
+    output += line + "\n";
+  });
 
 
-  /* Headings */
+  /* Render last table */
 
-  text =
-    text.replace(
-      /^### (.*)$/gm,
-      "<h4>$1</h4>"
-    );
+  if (insideTable) {
+    output += renderTable(tableRows);
+  }
 
 
-  text =
-    text.replace(
-      /^## (.*)$/gm,
-      "<h3>$1</h3>"
-    );
+  text = output;
 
 
-  text =
-    text.replace(
-      /^# (.*)$/gm,
-      "<h2>$1</h2>"
-    );
+  /* =====================================
+     HEADINGS
+  ===================================== */
+
+  text = text.replace(
+    /^###\s+(.*)$/gm,
+    "<h4>$1</h4>"
+  );
+
+  text = text.replace(
+    /^##\s+(.*)$/gm,
+    "<h3>$1</h3>"
+  );
+
+  text = text.replace(
+    /^#\s+(.*)$/gm,
+    "<h2>$1</h2>"
+  );
 
 
-  /* Line breaks */
+  /* =====================================
+     BOLD
+  ===================================== */
 
-  text =
-    text.replace(
-      /\n/g,
-      "<br>"
-    );
+  text = text.replace(
+    /\*\*(.*?)\*\*/g,
+    "<strong>$1</strong>"
+  );
+
+
+  /* =====================================
+     ITALIC
+  ===================================== */
+
+  text = text.replace(
+    /(?<!\*)\*(.*?)\*(?!\*)/g,
+    "<em>$1</em>"
+  );
+
+
+  /* =====================================
+     BULLET POINTS
+  ===================================== */
+
+  text = text.replace(
+    /^[•\-]\s+(.*)$/gm,
+    "<div class=\"answer-bullet\">$1</div>"
+  );
+
+
+  /* =====================================
+     NUMBERED LIST
+  ===================================== */
+
+  text = text.replace(
+    /^\d+\.\s+(.*)$/gm,
+    "<div class=\"answer-number\">$1</div>"
+  );
+
+
+  /* =====================================
+     HORIZONTAL LINE
+  ===================================== */
+
+  text = text.replace(
+    /^---$/gm,
+    "<hr>"
+  );
+
+
+  /* =====================================
+     LINE BREAKS
+  ===================================== */
+
+  text = text.replace(
+    /\n/g,
+    "<br>"
+  );
+
+
+  /* Remove extra breaks around HTML blocks */
+
+  text = text
+    .replace(/<br><h/g, "<h")
+    .replace(/<\/h2><br>/g, "</h2>")
+    .replace(/<\/h3><br>/g, "</h3>")
+    .replace(/<\/h4><br>/g, "</h4>")
+    .replace(/<br><div class="ai-table-wrapper">/g,
+             '<div class="ai-table-wrapper">')
+    .replace(/<\/div><br>/g, "</div>");
 
 
   return text;
 }
+
+
+  
