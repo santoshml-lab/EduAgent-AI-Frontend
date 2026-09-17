@@ -367,7 +367,6 @@ async function askAgent() {
 ========================================= */
 
 function formatAnswer(answer) {
-   
 
   if (!answer) {
     return "<p>No answer received.</p>";
@@ -379,21 +378,20 @@ function formatAnswer(answer) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-
-  /* =====================================
-     MARKDOWN TABLES
-  ===================================== */
-
   const lines = text.split("\n");
 
   let output = "";
   let tableRows = [];
   let insideTable = false;
 
+  /* =====================================
+     RENDER MARKDOWN TABLE
+  ===================================== */
+
   function renderTable(rows) {
 
     if (rows.length < 2) {
-      return rows.join("<br>");
+      return rows.join("");
     }
 
     const header = rows[0]
@@ -413,6 +411,7 @@ function formatAnswer(answer) {
     let table = `
       <div class="ai-table-wrapper">
         <table class="ai-table">
+
           <thead>
             <tr>
     `;
@@ -424,6 +423,7 @@ function formatAnswer(answer) {
     table += `
             </tr>
           </thead>
+
           <tbody>
     `;
 
@@ -442,6 +442,7 @@ function formatAnswer(answer) {
 
     table += `
           </tbody>
+
         </table>
       </div>
     `;
@@ -450,11 +451,14 @@ function formatAnswer(answer) {
   }
 
 
+  /* =====================================
+     DETECT TABLES
+  ===================================== */
+
   lines.forEach(line => {
 
     const trimmed = line.trim();
 
-    /* Detect table */
     if (
       trimmed.startsWith("|") &&
       trimmed.endsWith("|")
@@ -472,25 +476,25 @@ function formatAnswer(answer) {
     }
 
 
-    /* Table ended */
-
     if (insideTable) {
 
       output += renderTable(tableRows);
 
       tableRows = [];
-
       insideTable = false;
     }
 
 
-    /* Normal line */
+    /* Ignore empty lines */
 
-    output += line + "\n";
+    if (trimmed !== "") {
+      output += line + "\n";
+    }
+
   });
 
 
-  /* Render last table */
+  /* Render final table */
 
   if (insideTable) {
     output += renderTable(tableRows);
@@ -546,7 +550,7 @@ function formatAnswer(answer) {
 
   text = text.replace(
     /^[•\-]\s+(.*)$/gm,
-    "<div class=\"answer-bullet\">$1</div>"
+    '<div class="answer-bullet">$1</div>'
   );
 
 
@@ -556,7 +560,7 @@ function formatAnswer(answer) {
 
   text = text.replace(
     /^\d+\.\s+(.*)$/gm,
-    "<div class=\"answer-number\">$1</div>"
+    '<div class="answer-number">$1</div>'
   );
 
 
@@ -575,25 +579,48 @@ function formatAnswer(answer) {
   ===================================== */
 
   text = text.replace(
-    /\n/g,
+    /\n+/g,
     "<br>"
   );
 
 
-  /* Remove extra breaks around HTML blocks */
+  /* =====================================
+     CLEAN EXTRA BREAKS
+  ===================================== */
 
   text = text
-    .replace(/<br><h/g, "<h")
-    .replace(/<\/h2><br>/g, "</h2>")
-    .replace(/<\/h3><br>/g, "</h3>")
-    .replace(/<\/h4><br>/g, "</h4>")
-    .replace(/<br><div class="ai-table-wrapper">/g,
-             '<div class="ai-table-wrapper">')
-    .replace(/<\/div><br>/g, "</div>");
+
+    .replace(/(<br>)+<h/g, "<h")
+
+    .replace(/<\/h2>(<br>)+/g, "</h2>")
+
+    .replace(/<\/h3>(<br>)+/g, "</h3>")
+
+    .replace(/<\/h4>(<br>)+/g, "</h4>")
+
+    .replace(
+      /(<br>)+<div class="ai-table-wrapper">/g,
+      '<div class="ai-table-wrapper">'
+    )
+
+    .replace(
+      /<\/div>(<br>)+/g,
+      "</div>"
+    )
+
+    .replace(
+      /(<br>)+$/g,
+      ""
+    );
 
 
   return text;
 }
+
+
+   
+
+  
 
 
   
