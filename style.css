@@ -1155,5 +1155,46 @@ body {
   }
 }
 
+/* =========================================
+   RESPONSE SPACE CLEANUP
+========================================= */
+
+#responseSection {
+  margin-top: 20px;
+}
+
+#answerBox {
+  margin: 0;
+  padding: 0;
+}
+
+#answerBox .answer-content {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+#answerBox .answer-content br:first-child,
+#answerBox .answer-content br:last-child {
+  display: none;
+}
+
+#answerBox .answer-content h2,
+#answerBox .answer-content h3,
+#answerBox .answer-content h4 {
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+#answerBox .answer-content p {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+#answerBox .ai-table-wrapper {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
   
     
