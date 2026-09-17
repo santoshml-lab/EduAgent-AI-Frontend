@@ -822,5 +822,41 @@ body {
 
 }
 
+/* ===== MOBILE N8N STYLE WORKFLOW FIX ===== */
+
+@media (max-width: 1000px) {
+
+  .nodes {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 10px 5px 18px !important;
+    scroll-behavior: smooth;
+  }
+
+  .node {
+    flex: 0 0 230px !important;
+    min-width: 230px !important;
+  }
+
+  .arrow {
+    display: flex !important;
+    flex: 0 0 35px !important;
+    width: 35px !important;
+    min-width: 35px !important;
+    height: 50px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 28px !important;
+    font-weight: bold !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+}
+
   
     
