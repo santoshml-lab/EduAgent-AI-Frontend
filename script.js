@@ -1,6 +1,11 @@
 const BACKEND_URL =
   "https://eduagent-ai-osvz.onrender.com/ask";
 
+
+/* =========================================
+   SLEEP
+========================================= */
+
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
@@ -27,6 +32,7 @@ function setNode(nodeId, status, active = false) {
     "completed",
     "error"
   );
+
 
   if (
     status.includes("✓") ||
@@ -102,6 +108,65 @@ function isSafeURL(url) {
 
     return false;
   }
+}
+
+
+/* =========================================
+   FORMAT INLINE MARKDOWN
+========================================= */
+
+function formatInline(value) {
+
+  let text =
+    escapeHTML(value);
+
+
+  /* =====================================
+     MARKDOWN LINKS
+  ===================================== */
+
+  text = text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    function(match, label, url) {
+
+      if (!isSafeURL(url)) {
+        return label;
+      }
+
+      return `
+        <a
+          href="${url}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ${label}
+        </a>
+      `;
+    }
+  );
+
+
+  /* =====================================
+     BOLD
+  ===================================== */
+
+  text = text.replace(
+    /\*\*(.*?)\*\*/g,
+    "<strong>$1</strong>"
+  );
+
+
+  /* =====================================
+     ITALIC
+  ===================================== */
+
+  text = text.replace(
+    /(?<!\*)\*(.*?)\*(?!\*)/g,
+    "<em>$1</em>"
+  );
+
+
+  return text;
 }
 
 
@@ -360,7 +425,7 @@ async function askAgent() {
 
 
     if (
-      data.tool_trace &&
+      Array.isArray(data.tool_trace) &&
       data.tool_trace.length > 0
     ) {
 
@@ -563,14 +628,18 @@ function formatAnswer(answer) {
 
 
   /* =====================================
-     ESCAPE HTML
+     NORMALIZE NEWLINES
   ===================================== */
 
-  let text = escapeHTML(answer);
+  let raw =
+    String(answer)
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .trim();
 
 
   const lines =
-    text.split("\n");
+    raw.split("\n");
 
 
   let output = "";
@@ -588,7 +657,7 @@ function formatAnswer(answer) {
 
     if (rows.length < 2) {
 
-      return rows.join("");
+      return "";
     }
 
 
@@ -607,17 +676,21 @@ function formatAnswer(answer) {
             .split("|")
             .map(cell => cell.trim())
             .filter(cell => cell !== "")
-        );
+        )
+        .filter(row => row.length > 0);
+
+
+    if (header.length === 0) {
+
+      return "";
+    }
 
 
     let table = `
-
       <div class="ai-table-wrapper">
-
         <table class="ai-table">
 
           <thead>
-
             <tr>
     `;
 
@@ -625,15 +698,15 @@ function formatAnswer(answer) {
     header.forEach(cell => {
 
       table += `
-        <th>${cell}</th>
+        <th>
+          ${formatInline(cell)}
+        </th>
       `;
     });
 
 
     table += `
-
             </tr>
-
           </thead>
 
           <tbody>
@@ -645,29 +718,32 @@ function formatAnswer(answer) {
       if (!row.length) return;
 
 
-      table += "<tr>";
+      table += `
+        <tr>
+      `;
 
 
       row.forEach(cell => {
 
         table += `
-          <td>${cell}</td>
+          <td>
+            ${formatInline(cell)}
+          </td>
         `;
       });
 
 
-      table += "</tr>";
+      table += `
+        </tr>
+      `;
     });
 
 
     table += `
-
           </tbody>
 
         </table>
-
       </div>
-
     `;
 
 
@@ -683,6 +759,16 @@ function formatAnswer(answer) {
 
     const trimmed =
       line.trim();
+
+
+    /* ===================================
+       IGNORE EMPTY LINES
+    =================================== */
+
+    if (trimmed === "") {
+
+      return;
+    }
 
 
     /* ===================================
@@ -724,17 +810,115 @@ function formatAnswer(answer) {
 
 
     /* ===================================
-       IGNORE EMPTY LINES
+       HEADING
     =================================== */
 
-    if (trimmed === "") {
+    if (trimmed.startsWith("### ")) {
+
+      output += `
+        <h4>
+          ${formatInline(trimmed.substring(4))}
+        </h4>
+      `;
 
       return;
     }
 
 
-    output +=
-      line + "\n";
+    if (trimmed.startsWith("## ")) {
+
+      output += `
+        <h3>
+          ${formatInline(trimmed.substring(3))}
+        </h3>
+      `;
+
+      return;
+    }
+
+
+    if (trimmed.startsWith("# ")) {
+
+      output += `
+        <h2>
+          ${formatInline(trimmed.substring(2))}
+        </h2>
+      `;
+
+      return;
+    }
+
+
+    /* ===================================
+       BULLET
+    =================================== */
+
+    if (
+      trimmed.startsWith("• ") ||
+      trimmed.startsWith("- ")
+    ) {
+
+      const bulletText =
+        trimmed.substring(2);
+
+
+      output += `
+        <div class="answer-bullet">
+          ${formatInline(bulletText)}
+        </div>
+      `;
+
+      return;
+    }
+
+
+    /* ===================================
+       NUMBERED LIST
+    =================================== */
+
+    if (
+      /^\d+\.\s+/.test(trimmed)
+    ) {
+
+      const numberText =
+        trimmed.replace(
+          /^\d+\.\s+/,
+          ""
+        );
+
+
+      output += `
+        <div class="answer-number">
+          ${formatInline(numberText)}
+        </div>
+      `;
+
+      return;
+    }
+
+
+    /* ===================================
+       HORIZONTAL LINE
+    =================================== */
+
+    if (trimmed === "---") {
+
+      output += "<hr>";
+
+      return;
+    }
+
+
+    /* ===================================
+       NORMAL TEXT
+    =================================== */
+
+    output += `
+      <p>
+        ${formatInline(trimmed)}
+      </p>
+    `;
+
   });
 
 
@@ -749,157 +933,11 @@ function formatAnswer(answer) {
   }
 
 
-  text =
-    output.trim();
-
-
   /* =====================================
-     HEADINGS
+     FINAL CLEANUP
   ===================================== */
 
-  text = text.replace(
-    /^###\s+(.*)$/gm,
-    "<h4>$1</h4>"
-  );
-
-
-  text = text.replace(
-    /^##\s+(.*)$/gm,
-    "<h3>$1</h3>"
-  );
-
-
-  text = text.replace(
-    /^#\s+(.*)$/gm,
-    "<h2>$1</h2>"
-  );
-
-
-  /* =====================================
-     BOLD
-  ===================================== */
-
-  text = text.replace(
-    /\*\*(.*?)\*\*/g,
-    "<strong>$1</strong>"
-  );
-
-
-  /* =====================================
-     ITALIC
-  ===================================== */
-
-  text = text.replace(
-    /(?<!\*)\*(.*?)\*(?!\*)/g,
-    "<em>$1</em>"
-  );
-
-
-  /* =====================================
-     BULLETS
-  ===================================== */
-
-  text = text.replace(
-    /^[•\-]\s+(.*)$/gm,
-    '<div class="answer-bullet">$1</div>'
-  );
-
-
-  /* =====================================
-     NUMBERED LIST
-  ===================================== */
-
-  text = text.replace(
-    /^\d+\.\s+(.*)$/gm,
-    '<div class="answer-number">$1</div>'
-  );
-
-
-  /* =====================================
-     HORIZONTAL LINE
-  ===================================== */
-
-  text = text.replace(
-    /^---$/gm,
-    "<hr>"
-  );
-
-
-  /* =====================================
-   MARKDOWN LINKS
-===================================== */
-
-text = text.replace(
-  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-  function(match, label, url) {
-
-    if (!isSafeURL(url)) {
-      return label;
-    }
-
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
-  }
-);
-     
-  
-
-
-  
-
-
-  /* =====================================
-     LINE BREAKS
-  ===================================== */
-
-  text = text.replace(
-    /\n/g,
-    "<br>"
-  );
-
-
-  /* =====================================
-     CLEAN HTML SPACING
-  ===================================== */
-
-  text = text
-
-    .replace(
-      /(<br>)+<h/g,
-      "<h"
-    )
-
-    .replace(
-      /<\/h2>(<br>)+/g,
-      "</h2>"
-    )
-
-    .replace(
-      /<\/h3>(<br>)+/g,
-      "</h3>"
-    )
-
-    .replace(
-      /<\/h4>(<br>)+/g,
-      "</h4>"
-    )
-
-    .replace(
-      /(<br>)+<div class="ai-table-wrapper">/g,
-      '<div class="ai-table-wrapper">'
-    )
-
-    .replace(
-      /<\/div>(<br>)+/g,
-      "</div>"
-    )
-
-    .replace(
-      /(<br>)+$/g,
-      ""
-    );
-
-
-  return text;
+  return output.trim();
 }
 
   
