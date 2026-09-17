@@ -808,10 +808,16 @@ async function askAgent() {
           },
 
           body:
-            JSON.stringify({
-              question:
-                question
-            })
+          JSON.stringify({
+          question:
+          question,
+          session_id:
+          getSessionId()
+  })
+            
+              
+                
+            
         }
       );
 
