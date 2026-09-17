@@ -418,85 +418,85 @@ async function askAgent() {
 
 
     /* =====================================
-       DETECT ACTUAL TOOL
-    ===================================== */
+   DETECT ACTUAL TOOLS
+===================================== */
 
-    let actualTool = null;
+const toolNames = {
 
+  calculator:
+    "🧮 Calculator",
 
-    if (
-      Array.isArray(data.tool_trace) &&
-      data.tool_trace.length > 0
-    ) {
+  web_search:
+    "🔎 SerpApi",
 
-      actualTool =
-        data.tool_trace.find(
-          item =>
-            item.tool !==
-            "education_router"
-        );
-    }
+  quiz_generator:
+    "📝 Quiz Generator",
 
-
-    const toolNames = {
-
-      calculator:
-        "🧮 Calculator",
-
-      web_search:
-        "🔎 SerpApi",
-
-      quiz_generator:
-        "📝 Quiz Generator",
-
-      study_plan_generator:
-        "📅 Study Planner"
-    };
+  study_plan_generator:
+    "📅 Study Planner"
+};
 
 
-    /* =====================================
-       TOOL NODE
-    ===================================== */
-
-    if (actualTool) {
-
-      const displayName =
-        toolNames[actualTool.tool] ||
-        `🔧 ${actualTool.tool}`;
-
-
-      setNode(
-        "toolNode",
-        `⏳ ${displayName}`,
-        true
-      );
+const actualTools =
+  Array.isArray(data.tool_trace)
+    ? data.tool_trace.filter(
+        item =>
+          item.tool !==
+          "education_router"
+      )
+    : [];
 
 
-      await sleep(700);
+/* =====================================
+   SHOW ACTUAL TOOL CHAIN
+===================================== */
+
+if (actualTools.length > 0) {
+
+  for (const tool of actualTools) {
+
+    const displayName =
+      toolNames[tool.tool] ||
+      `🔧 ${tool.tool}`;
 
 
-      setNode(
-        "toolNode",
-        `✓ ${displayName}`
-      );
-
-    } else {
-
-      setNode(
-        "toolNode",
-        "⏳ Direct Answer",
-        true
-      );
+    setNode(
+      "toolNode",
+      `⏳ ${displayName}`,
+      true
+    );
 
 
-      await sleep(500);
+    await sleep(700);
 
 
-      setNode(
-        "toolNode",
-        "✓ Direct Answer"
-      );
-    }
+    setNode(
+      "toolNode",
+      `✓ ${displayName}`
+    );
+
+
+    await sleep(300);
+  }
+
+} else {
+
+  setNode(
+    "toolNode",
+    "⏳ Direct Answer",
+    true
+  );
+
+
+  await sleep(500);
+
+
+  setNode(
+    "toolNode",
+    "✓ Direct Answer"
+  );
+}
+        
 
 
     /* =====================================
