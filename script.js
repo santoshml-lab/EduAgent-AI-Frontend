@@ -385,7 +385,7 @@ function formatAnswer(answer) {
   let insideTable = false;
 
   /* =====================================
-     RENDER MARKDOWN TABLE
+     RENDER TABLE
   ===================================== */
 
   function renderTable(rows) {
@@ -411,7 +411,6 @@ function formatAnswer(answer) {
     let table = `
       <div class="ai-table-wrapper">
         <table class="ai-table">
-
           <thead>
             <tr>
     `;
@@ -423,13 +422,12 @@ function formatAnswer(answer) {
     table += `
             </tr>
           </thead>
-
           <tbody>
     `;
 
     bodyRows.forEach(row => {
 
-      if (row.length === 0) return;
+      if (!row.length) return;
 
       table += "<tr>";
 
@@ -442,7 +440,6 @@ function formatAnswer(answer) {
 
     table += `
           </tbody>
-
         </table>
       </div>
     `;
@@ -452,12 +449,14 @@ function formatAnswer(answer) {
 
 
   /* =====================================
-     DETECT TABLES
+     PROCESS LINES
   ===================================== */
 
   lines.forEach(line => {
 
     const trimmed = line.trim();
+
+    /* Table line */
 
     if (
       trimmed.startsWith("|") &&
@@ -465,7 +464,6 @@ function formatAnswer(answer) {
     ) {
 
       if (!insideTable) {
-
         insideTable = true;
         tableRows = [];
       }
@@ -475,6 +473,8 @@ function formatAnswer(answer) {
       return;
     }
 
+
+    /* Finish table */
 
     if (insideTable) {
 
@@ -487,21 +487,23 @@ function formatAnswer(answer) {
 
     /* Ignore empty lines */
 
-    if (trimmed !== "") {
-      output += line + "\n";
+    if (trimmed === "") {
+      return;
     }
 
+
+    output += line + "\n";
   });
 
 
-  /* Render final table */
+  /* Final table */
 
   if (insideTable) {
     output += renderTable(tableRows);
   }
 
 
-  text = output;
+  text = output.trim();
 
 
   /* =====================================
@@ -545,7 +547,7 @@ function formatAnswer(answer) {
 
 
   /* =====================================
-     BULLET POINTS
+     BULLETS
   ===================================== */
 
   text = text.replace(
@@ -579,43 +581,39 @@ function formatAnswer(answer) {
   ===================================== */
 
   text = text.replace(
-    /\n+/g,
+    /\n/g,
     "<br>"
   );
 
 
   /* =====================================
-     CLEAN EXTRA BREAKS
+     CLEAN HTML SPACING
   ===================================== */
 
   text = text
-
     .replace(/(<br>)+<h/g, "<h")
-
     .replace(/<\/h2>(<br>)+/g, "</h2>")
-
     .replace(/<\/h3>(<br>)+/g, "</h3>")
-
     .replace(/<\/h4>(<br>)+/g, "</h4>")
-
     .replace(
       /(<br>)+<div class="ai-table-wrapper">/g,
       '<div class="ai-table-wrapper">'
     )
-
     .replace(
       /<\/div>(<br>)+/g,
       "</div>"
     )
-
     .replace(
       /(<br>)+$/g,
       ""
     );
 
-
   return text;
 }
+
+  
+
+  
 
 
    
