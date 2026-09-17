@@ -454,6 +454,9 @@ async function askAgent() {
                 "final_response"
           )
         : [];
+    console.log("TOOL TRACE:", data.tool_trace);
+    console.log("ACTUAL TOOLS:", actualTools);
+    
 
 
     /* =====================================
