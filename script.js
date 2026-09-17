@@ -16,7 +16,8 @@ const sleep = (ms) =>
 
 function setNode(nodeId, status, active = false) {
 
-  const node = document.getElementById(nodeId);
+  const node =
+    document.getElementById(nodeId);
 
   if (!node) return;
 
@@ -65,13 +66,67 @@ function setNode(nodeId, status, active = false) {
 
 function resetWorkflow() {
 
-  setNode("userNode", "Waiting");
+  setNode(
+    "userNode",
+    "Waiting"
+  );
 
-  setNode("routerNode", "Waiting");
+  setNode(
+    "routerNode",
+    "Waiting"
+  );
 
-  setNode("toolNode", "Waiting");
+  setNode(
+    "toolNode",
+    "Waiting"
+  );
 
-  setNode("responseNode", "Waiting");
+  setNode(
+    "responseNode",
+    "Waiting"
+  );
+
+
+  /*
+     Remove dynamically created
+     tool nodes and arrows.
+  */
+
+  document
+    .querySelectorAll(
+      ".dynamic-tool-node, .dynamic-tool-arrow"
+    )
+    .forEach(element => {
+      element.remove();
+    });
+
+
+  /*
+     Restore original tool node title.
+  */
+
+  const toolNode =
+    document.getElementById("toolNode");
+
+  if (toolNode) {
+
+    const titleElement =
+      toolNode.querySelector(
+        ".node-title"
+      );
+
+    if (titleElement) {
+
+      titleElement.innerText =
+        "🔧 Tool";
+    }
+
+    toolNode.classList.remove(
+      "active",
+      "completed",
+      "error"
+    );
+  }
 }
 
 
@@ -82,11 +137,26 @@ function resetWorkflow() {
 function escapeHTML(value) {
 
   return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 }
 
 
@@ -98,7 +168,8 @@ function isSafeURL(url) {
 
   try {
 
-    const parsed = new URL(url);
+    const parsed =
+      new URL(url);
 
     return (
       parsed.protocol === "http:" ||
@@ -128,9 +199,14 @@ function formatInline(value) {
 
   text = text.replace(
     /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-    function(match, label, url) {
+    function(
+      match,
+      label,
+      url
+    ) {
 
       if (!isSafeURL(url)) {
+
         return label;
       }
 
@@ -213,55 +289,63 @@ function formatSources(sources) {
   `;
 
 
-  sources.forEach((source, index) => {
+  sources.forEach(
+    (
+      source,
+      index
+    ) => {
 
-    const title =
-      escapeHTML(
-        source.title ||
-        `Source ${index + 1}`
-      );
-
-
-    const url =
-      source.url || "";
-
-
-    if (!isSafeURL(url)) {
-      return;
-    }
+      const title =
+        escapeHTML(
+          source.title ||
+          `Source ${index + 1}`
+        );
 
 
-    const safeURL =
-      escapeHTML(url);
+      const url =
+        source.url || "";
 
 
-    html += `
-      <div class="source-card">
+      if (!isSafeURL(url)) {
 
-        <div class="source-number">
-          ${String(index + 1).padStart(2, "0")}
-        </div>
+        return;
+      }
 
-        <div class="source-info">
 
-          <div class="source-title">
-            ${title}
+      const safeURL =
+        escapeHTML(url);
+
+
+      html += `
+        <div class="source-card">
+
+          <div class="source-number">
+            ${String(
+              index + 1
+            ).padStart(2, "0")}
           </div>
 
-          <a
-            class="source-link"
-            href="${safeURL}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open Source ↗
-          </a>
+          <div class="source-info">
+
+            <div class="source-title">
+              ${title}
+            </div>
+
+            <a
+              class="source-link"
+              href="${safeURL}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Source ↗
+            </a>
+
+          </div>
 
         </div>
-
-      </div>
-    `;
-  });
+      `;
+    }
+  );
 
 
   html += `
@@ -276,22 +360,325 @@ function formatSources(sources) {
 
 
 /* =========================================
+   CREATE DYNAMIC TOOL NODE
+========================================= */
+
+function createToolNode(
+  displayName,
+  index,
+  parent
+) {
+
+  /*
+     Arrow before every additional tool.
+  */
+
+  const arrow =
+    document.createElement(
+      "div"
+    );
+
+  arrow.className =
+    "arrow dynamic-tool-arrow";
+
+  arrow.innerText =
+    "→";
+
+
+  parent.appendChild(
+    arrow
+  );
+
+
+  /*
+     Create tool node.
+  */
+
+  const node =
+    document.createElement(
+      "div"
+    );
+
+  node.className =
+    "node dynamic-tool-node";
+
+  node.id =
+    `dynamicToolNode${index}`;
+
+
+  node.innerHTML = `
+    <div class="node-title">
+      ${escapeHTML(displayName)}
+    </div>
+
+    <div class="node-status">
+      Waiting
+    </div>
+  `;
+
+
+  parent.appendChild(
+    node
+  );
+
+
+  return node;
+}
+
+
+/* =========================================
+   UPDATE TOOL NODE
+========================================= */
+
+async function animateToolNode(
+  node,
+  displayName,
+  success
+) {
+
+  if (!node) return;
+
+
+  const titleElement =
+    node.querySelector(
+      ".node-title"
+    );
+
+  const statusElement =
+    node.querySelector(
+      ".node-status"
+    );
+
+
+  if (
+    titleElement
+  ) {
+
+    titleElement.innerText =
+      displayName;
+  }
+
+
+  node.classList.remove(
+    "active",
+    "completed",
+    "error"
+  );
+
+
+  /*
+     Tool running
+  */
+
+  statusElement.innerText =
+    `⏳ ${displayName}`;
+
+  node.classList.add(
+    "active"
+  );
+
+
+  await sleep(700);
+
+
+  node.classList.remove(
+    "active"
+  );
+
+
+  /*
+     Tool completed
+  */
+
+  if (success) {
+
+    statusElement.innerText =
+      `✓ ${displayName}`;
+
+    node.classList.add(
+      "completed"
+    );
+
+  } else {
+
+    statusElement.innerText =
+      `✗ ${displayName}`;
+
+    node.classList.add(
+      "error"
+    );
+  }
+
+
+  await sleep(400);
+}
+
+
+/* =========================================
+   SHOW ACTUAL TOOL CHAIN
+========================================= */
+
+async function showToolChain(
+  actualTools
+) {
+
+  const toolNode =
+    document.getElementById(
+      "toolNode"
+    );
+
+
+  if (!toolNode) return;
+
+
+  const toolsParent =
+    toolNode.parentElement;
+
+
+  /*
+     No actual tools
+  */
+
+  if (
+    actualTools.length === 0
+  ) {
+
+    const titleElement =
+      toolNode.querySelector(
+        ".node-title"
+      );
+
+    const statusElement =
+      toolNode.querySelector(
+        ".node-status"
+      );
+
+
+    if (titleElement) {
+
+      titleElement.innerText =
+        "💡 Direct Answer";
+    }
+
+
+    statusElement.innerText =
+      "✓ Direct Answer";
+
+
+    toolNode.classList.remove(
+      "active",
+      "error"
+    );
+
+    toolNode.classList.add(
+      "completed"
+    );
+
+
+    return;
+  }
+
+
+  const toolNames = {
+
+    calculator:
+      "🧮 Calculator",
+
+    web_search:
+      "🔎 SerpApi",
+
+    quiz_generator:
+      "📝 Quiz Generator",
+
+    study_plan_generator:
+      "📅 Study Planner"
+  };
+
+
+  /*
+     Display every actual tool
+     in execution order.
+  */
+
+  for (
+    let i = 0;
+    i < actualTools.length;
+    i++
+  ) {
+
+    const tool =
+      actualTools[i];
+
+
+    const displayName =
+      toolNames[tool.tool] ||
+      `🔧 ${tool.tool}`;
+
+
+    let currentNode;
+
+
+    /*
+       First tool uses original
+       tool node.
+    */
+
+    if (i === 0) {
+
+      currentNode =
+        toolNode;
+
+    } else {
+
+      /*
+         Additional tools get
+         dynamically created nodes.
+      */
+
+      currentNode =
+        createToolNode(
+          displayName,
+          i,
+          toolsParent
+        );
+    }
+
+
+    await animateToolNode(
+      currentNode,
+      displayName,
+      tool.status === "success"
+    );
+  }
+}
+
+
+/* =========================================
    ASK AGENT
 ========================================= */
 
 async function askAgent() {
 
   const input =
-    document.getElementById("questionInput");
+    document.getElementById(
+      "questionInput"
+    );
 
   const button =
-    document.getElementById("askButton");
+    document.getElementById(
+      "askButton"
+    );
 
   const responseSection =
-    document.getElementById("responseSection");
+    document.getElementById(
+      "responseSection"
+    );
 
   const answerBox =
-    document.getElementById("answerBox");
+    document.getElementById(
+      "answerBox"
+    );
+
 
   const question =
     input.value.trim();
@@ -299,13 +686,16 @@ async function askAgent() {
 
   if (!question) {
 
-    alert("Please enter a question.");
+    alert(
+      "Please enter a question."
+    );
 
     return;
   }
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
   button.innerText =
     "Agent Working...";
@@ -351,6 +741,7 @@ async function askAgent() {
       true
     );
 
+
     await sleep(500);
 
 
@@ -379,16 +770,19 @@ async function askAgent() {
       await fetch(
         BACKEND_URL,
         {
-          method: "POST",
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
               "application/json"
           },
 
-          body: JSON.stringify({
-            question: question
-          })
+          body:
+            JSON.stringify({
+              question:
+                question
+            })
         }
       );
 
@@ -422,30 +816,10 @@ async function askAgent() {
        DETECT ACTUAL TOOLS
     ===================================== */
 
-    const toolNames = {
-
-      calculator:
-        "🧮 Calculator",
-
-      web_search:
-        "🔎 SerpApi",
-
-      quiz_generator:
-        "📝 Quiz Generator",
-
-      study_plan_generator:
-        "📅 Study Planner"
-    };
-
-
-    /*
-       IMPORTANT:
-       education_router and final_response
-       are NOT displayed as normal tools.
-    */
-
     const actualTools =
-      Array.isArray(data.tool_trace)
+      Array.isArray(
+        data.tool_trace
+      )
         ? data.tool_trace.filter(
             item =>
               item.tool !==
@@ -454,163 +828,27 @@ async function askAgent() {
                 "final_response"
           )
         : [];
-    console.log("TOOL TRACE:", data.tool_trace);
-    console.log("ACTUAL TOOLS:", actualTools);
-    
+
+
+    console.log(
+      "TOOL TRACE:",
+      data.tool_trace
+    );
+
+
+    console.log(
+      "ACTUAL TOOLS:",
+      actualTools
+    );
 
 
     /* =====================================
-   SHOW ACTUAL TOOL CHAIN
-===================================== */
+       SHOW ACTUAL TOOL CHAIN
+    ===================================== */
 
-const toolNode =
-  document.getElementById("toolNode");
-
-if (toolNode) {
-
-  const toolsParent =
-    toolNode.parentElement;
-
-  /*
-     Keep the original tool node
-     as the first dynamic tool node.
-  */
-
-  if (actualTools.length > 0) {
-
-    for (let i = 0; i < actualTools.length; i++) {
-
-      const tool =
-        actualTools[i];
-
-      const displayName =
-        toolNames[tool.tool] ||
-        `🔧 ${tool.tool}`;
-
-
-      /* ---------------------------------
-         FIRST TOOL
-      --------------------------------- */
-
-      let currentNode;
-
-      if (i === 0) {
-
-        currentNode = toolNode;
-
-      } else {
-
-        /* Create arrow */
-
-        const arrow =
-          document.createElement("div");
-
-        arrow.className = "arrow";
-        arrow.innerText = "→";
-
-        toolsParent.appendChild(arrow);
-
-
-        /* Create new tool node */
-
-        currentNode =
-          document.createElement("div");
-
-        currentNode.className = "node";
-
-        currentNode.id =
-          `dynamicToolNode${i}`;
-
-        currentNode.innerHTML = `
-          <div class="node-title">
-            ${displayName}
-          </div>
-
-          <div class="node-status">
-            Waiting
-          </div>
-        `;
-
-        toolsParent.appendChild(
-          currentNode
-        );
-      }
-
-
-      /* ---------------------------------
-         UPDATE TOOL NODE
-      --------------------------------- */
-
-      const statusElement =
-        currentNode.querySelector(
-          ".node-status"
-        );
-
-
-      currentNode.classList.remove(
-        "active",
-        "completed",
-        "error"
-      );
-
-
-      statusElement.innerText =
-        `⏳ ${displayName}`;
-
-      currentNode.classList.add(
-        "active"
-      );
-
-
-      await sleep(700);
-
-
-      currentNode.classList.remove(
-        "active"
-      );
-
-
-      if (
-        tool.status === "success"
-      ) {
-
-        statusElement.innerText =
-          `✓ ${displayName}`;
-
-        currentNode.classList.add(
-          "completed"
-        );
-
-      } else {
-
-        statusElement.innerText =
-          `✗ ${displayName}`;
-
-        currentNode.classList.add(
-          "error"
-        );
-      }
-
-
-      await sleep(400);
-    }
-
-  } else {
-
-    const statusElement =
-      toolNode.querySelector(
-        ".node-status"
-      );
-
-    statusElement.innerText =
-      "✓ Direct Answer";
-
-    toolNode.classList.add(
-      "completed"
+    await showToolChain(
+      actualTools
     );
-  }
-}
-          
 
 
     /* =====================================
@@ -665,19 +903,25 @@ if (toolNode) {
 
       <div class="answer-content">
 
-        ${formatAnswer(data.answer)}
+        ${formatAnswer(
+          data.answer
+        )}
 
       </div>
 
 
-      ${formatSources(data.sources)}
+      ${formatSources(
+        data.sources
+      )}
 
     `;
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     setNode(
@@ -685,10 +929,12 @@ if (toolNode) {
       "⚠ Error"
     );
 
+
     setNode(
       "toolNode",
       "⚠ Failed"
     );
+
 
     setNode(
       "responseNode",
@@ -722,7 +968,8 @@ if (toolNode) {
   }
 
 
-  button.disabled = false;
+  button.disabled =
+    false;
 
   button.innerText =
     "Ask EduAgent";
@@ -737,7 +984,11 @@ function formatAnswer(answer) {
 
   if (!answer) {
 
-    return "<p>No answer received.</p>";
+    return `
+      <p>
+        No answer received.
+      </p>
+    `;
   }
 
 
@@ -747,8 +998,14 @@ function formatAnswer(answer) {
 
   let raw =
     String(answer)
-      .replace(/\r\n/g, "\n")
-      .replace(/\r/g, "\n")
+      .replace(
+        /\r\n/g,
+        "\n"
+      )
+      .replace(
+        /\r/g,
+        "\n"
+      )
       .trim();
 
 
@@ -756,11 +1013,16 @@ function formatAnswer(answer) {
     raw.split("\n");
 
 
-  let output = "";
+  let output =
+    "";
 
-  let tableRows = [];
 
-  let insideTable = false;
+  let tableRows =
+    [];
+
+
+  let insideTable =
+    false;
 
 
   /* =====================================
@@ -769,7 +1031,9 @@ function formatAnswer(answer) {
 
   function renderTable(rows) {
 
-    if (rows.length < 2) {
+    if (
+      rows.length < 2
+    ) {
 
       return "";
     }
@@ -778,23 +1042,41 @@ function formatAnswer(answer) {
     const header =
       rows[0]
         .split("|")
-        .map(cell => cell.trim())
-        .filter(cell => cell !== "");
+        .map(
+          cell =>
+            cell.trim()
+        )
+        .filter(
+          cell =>
+            cell !== ""
+        );
 
 
     const bodyRows =
       rows
         .slice(2)
-        .map(row =>
-          row
-            .split("|")
-            .map(cell => cell.trim())
-            .filter(cell => cell !== "")
+        .map(
+          row =>
+            row
+              .split("|")
+              .map(
+                cell =>
+                  cell.trim()
+              )
+              .filter(
+                cell =>
+                  cell !== ""
+              )
         )
-        .filter(row => row.length > 0);
+        .filter(
+          row =>
+            row.length > 0
+        );
 
 
-    if (header.length === 0) {
+    if (
+      header.length === 0
+    ) {
 
       return "";
     }
@@ -802,61 +1084,77 @@ function formatAnswer(answer) {
 
     let table = `
       <div class="ai-table-wrapper">
+
         <table class="ai-table">
 
           <thead>
+
             <tr>
     `;
 
 
-    header.forEach(cell => {
+    header.forEach(
+      cell => {
 
-      table += `
-        <th>
-          ${formatInline(cell)}
-        </th>
-      `;
-    });
+        table += `
+          <th>
+            ${formatInline(
+              cell
+            )}
+          </th>
+        `;
+      }
+    );
 
 
     table += `
             </tr>
+
           </thead>
 
           <tbody>
     `;
 
 
-    bodyRows.forEach(row => {
+    bodyRows.forEach(
+      row => {
 
-      if (!row.length) return;
+        if (
+          !row.length
+        ) return;
 
-
-      table += `
-        <tr>
-      `;
-
-
-      row.forEach(cell => {
 
         table += `
-          <td>
-            ${formatInline(cell)}
-          </td>
+          <tr>
         `;
-      });
 
 
-      table += `
-        </tr>
-      `;
-    });
+        row.forEach(
+          cell => {
+
+            table += `
+              <td>
+                ${formatInline(
+                  cell
+                )}
+              </td>
+            `;
+          }
+        );
+
+
+        table += `
+          </tr>
+        `;
+      }
+    );
 
 
     table += `
           </tbody>
 
         </table>
+
       </div>
     `;
 
@@ -869,181 +1167,238 @@ function formatAnswer(answer) {
      PROCESS LINES
   ===================================== */
 
-  lines.forEach(line => {
+  lines.forEach(
+    line => {
 
-    const trimmed =
-      line.trim();
-
-
-    /* ===================================
-       IGNORE EMPTY LINES
-    =================================== */
-
-    if (trimmed === "") {
-
-      return;
-    }
+      const trimmed =
+        line.trim();
 
 
-    /* ===================================
-       TABLE LINE
-    =================================== */
+      /* ===================================
+         IGNORE EMPTY LINES
+      =================================== */
 
-    if (
-      trimmed.startsWith("|") &&
-      trimmed.endsWith("|")
-    ) {
+      if (
+        trimmed === ""
+      ) {
 
-      if (!insideTable) {
-
-        insideTable = true;
-
-        tableRows = [];
+        return;
       }
 
 
-      tableRows.push(trimmed);
+      /* ===================================
+         TABLE LINE
+      =================================== */
 
-      return;
-    }
+      if (
+        trimmed.startsWith("|") &&
+        trimmed.endsWith("|")
+      ) {
 
+        if (
+          !insideTable
+        ) {
 
-    /* ===================================
-       FINISH TABLE
-    =================================== */
+          insideTable =
+            true;
 
-    if (insideTable) {
-
-      output +=
-        renderTable(tableRows);
-
-      tableRows = [];
-
-      insideTable = false;
-    }
-
-
-    /* ===================================
-       HEADING
-    =================================== */
-
-    if (trimmed.startsWith("### ")) {
-
-      output += `
-        <h4>
-          ${formatInline(trimmed.substring(4))}
-        </h4>
-      `;
-
-      return;
-    }
+          tableRows =
+            [];
+        }
 
 
-    if (trimmed.startsWith("## ")) {
-
-      output += `
-        <h3>
-          ${formatInline(trimmed.substring(3))}
-        </h3>
-      `;
-
-      return;
-    }
-
-
-    if (trimmed.startsWith("# ")) {
-
-      output += `
-        <h2>
-          ${formatInline(trimmed.substring(2))}
-        </h2>
-      `;
-
-      return;
-    }
-
-
-    /* ===================================
-       BULLET
-    =================================== */
-
-    if (
-      trimmed.startsWith("• ") ||
-      trimmed.startsWith("- ")
-    ) {
-
-      const bulletText =
-        trimmed.substring(2);
-
-
-      output += `
-        <div class="answer-bullet">
-          ${formatInline(bulletText)}
-        </div>
-      `;
-
-      return;
-    }
-
-
-    /* ===================================
-       NUMBERED LIST
-    =================================== */
-
-    if (
-      /^\d+\.\s+/.test(trimmed)
-    ) {
-
-      const numberText =
-        trimmed.replace(
-          /^\d+\.\s+/,
-          ""
+        tableRows.push(
+          trimmed
         );
 
+        return;
+      }
+
+
+      /* ===================================
+         FINISH TABLE
+      =================================== */
+
+      if (
+        insideTable
+      ) {
+
+        output +=
+          renderTable(
+            tableRows
+          );
+
+        tableRows =
+          [];
+
+        insideTable =
+          false;
+      }
+
+
+      /* ===================================
+         HEADING
+      =================================== */
+
+      if (
+        trimmed.startsWith(
+          "### "
+        )
+      ) {
+
+        output += `
+          <h4>
+            ${formatInline(
+              trimmed.substring(
+                4
+              )
+            )}
+          </h4>
+        `;
+
+        return;
+      }
+
+
+      if (
+        trimmed.startsWith(
+          "## "
+        )
+      ) {
+
+        output += `
+          <h3>
+            ${formatInline(
+              trimmed.substring(
+                3
+              )
+            )}
+          </h3>
+        `;
+
+        return;
+      }
+
+
+      if (
+        trimmed.startsWith(
+          "# "
+        )
+      ) {
+
+        output += `
+          <h2>
+            ${formatInline(
+              trimmed.substring(
+                2
+              )
+            )}
+          </h2>
+        `;
+
+        return;
+      }
+
+
+      /* ===================================
+         BULLET
+      =================================== */
+
+      if (
+        trimmed.startsWith("• ") ||
+        trimmed.startsWith("- ")
+      ) {
+
+        const bulletText =
+          trimmed.substring(
+            2
+          );
+
+
+        output += `
+          <div class="answer-bullet">
+            ${formatInline(
+              bulletText
+            )}
+          </div>
+        `;
+
+        return;
+      }
+
+
+      /* ===================================
+         NUMBERED LIST
+      =================================== */
+
+      if (
+        /^\d+\.\s+/.test(
+          trimmed
+        )
+      ) {
+
+        const numberText =
+          trimmed.replace(
+            /^\d+\.\s+/,
+            ""
+          );
+
+
+        output += `
+          <div class="answer-number">
+            ${formatInline(
+              numberText
+            )}
+          </div>
+        `;
+
+        return;
+      }
+
+
+      /* ===================================
+         HORIZONTAL LINE
+      =================================== */
+
+      if (
+        trimmed === "---"
+      ) {
+
+        output +=
+          "<hr>";
+
+        return;
+      }
+
+
+      /* ===================================
+         NORMAL TEXT
+      =================================== */
 
       output += `
-        <div class="answer-number">
-          ${formatInline(numberText)}
-        </div>
+        <p>
+          ${formatInline(
+            trimmed
+          )}
+        </p>
       `;
 
-      return;
     }
-
-
-    /* ===================================
-       HORIZONTAL LINE
-    =================================== */
-
-    if (trimmed === "---") {
-
-      output += "<hr>";
-
-      return;
-    }
-
-
-    /* ===================================
-       NORMAL TEXT
-    =================================== */
-
-    output += `
-      <p>
-        ${formatInline(trimmed)}
-      </p>
-    `;
-
-  });
+  );
 
 
   /* =====================================
      FINAL TABLE
   ===================================== */
 
-  if (insideTable) {
+  if (
+    insideTable
+  ) {
 
     output +=
-      renderTable(tableRows);
+      renderTable(
+        tableRows
+      );
   }
 
 
