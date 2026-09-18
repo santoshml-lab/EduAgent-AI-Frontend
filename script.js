@@ -1,19 +1,12 @@
 const BACKEND_URL =
   "https://eduagent-ai-osvz.onrender.com/ask";
-// ============================================================
-// Conversation Session
-// ============================================================
 
 const SESSION_KEY = "eduagent_session_id";
 
 function getSessionId() {
-
-    let sessionId = localStorage.getItem(
-        SESSION_KEY
-    );
+    let sessionId = localStorage.getItem(SESSION_KEY);
 
     if (!sessionId) {
-
         sessionId =
             (crypto.randomUUID)
                 ? crypto.randomUUID()
@@ -21,1428 +14,991 @@ function getSessionId() {
                     .toString(36)
                     .substring(2)}`;
 
-        localStorage.setItem(
-            SESSION_KEY,
-            sessionId
-        );
+        localStorage.setItem(SESSION_KEY, sessionId);
     }
 
     return sessionId;
 }
 
 
-/* =========================================
-   SLEEP
-========================================= */
+/* =========================
+   DOM ELEMENTS
+========================= */
 
-const sleep = (ms) =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const chatForm = document.getElementById("chat-form");
+const questionInput = document.getElementById("question");
+const answerBox = document.getElementById("answer-box");
 
+const toolChain = document.getElementById("tool-chain");
+const sourcePanel = document.getElementById("source-panel");
 
-/* =========================================
-   WORKFLOW NODE CONTROL
-========================================= */
-
-function setNode(nodeId, status, active = false) {
-
-  const node =
-    document.getElementById(nodeId);
-
-  if (!node) return;
-
-  const statusElement =
-    node.querySelector(".node-status");
-
-  if (!statusElement) return;
-
-  statusElement.innerText = status;
-
-  node.classList.remove(
-    "active",
-    "completed",
-    "error"
-  );
+const workflowNodes = document.querySelectorAll(".workflow-node");
 
 
-  if (
-    status.includes("✓") ||
-    status.includes("Completed") ||
-    status.includes("Received") ||
-    status.includes("Generated")
-  ) {
-
-    node.classList.add("completed");
-
-  } else if (
-    status.includes("⚠") ||
-    status.includes("Failed") ||
-    status.includes("Error") ||
-    status.includes("✗")
-  ) {
-
-    node.classList.add("error");
-
-  } else if (active) {
-
-    node.classList.add("active");
-  }
-}
-
-
-/* =========================================
-   RESET WORKFLOW
-========================================= */
+/* =========================
+   WORKFLOW
+========================= */
 
 function resetWorkflow() {
-
-  setNode(
-    "userNode",
-    "Waiting"
-  );
-
-  setNode(
-    "routerNode",
-    "Waiting"
-  );
-
-  setNode(
-    "toolNode",
-    "Waiting"
-  );
-
-  setNode(
-    "responseNode",
-    "Waiting"
-  );
-
-
-  /*
-     Remove dynamically created
-     tool nodes and arrows.
-  */
-
-  document
-    .querySelectorAll(
-      ".dynamic-tool-node, .dynamic-tool-arrow"
-    )
-    .forEach(element => {
-      element.remove();
-    });
-
-
-  /*
-     Restore original tool node title.
-  */
-
-  const toolNode =
-    document.getElementById("toolNode");
-
-  if (toolNode) {
-
-    const titleElement =
-      toolNode.querySelector(
-        ".node-title"
-      );
-
-    if (titleElement) {
-
-      titleElement.innerText =
-        "🔧 Tool";
-    }
-
-    toolNode.classList.remove(
-      "active",
-      "completed",
-      "error"
-    );
-  }
-}
-
-
-/* =========================================
-   SAFE HTML ESCAPE
-========================================= */
-
-function escapeHTML(value) {
-
-  return String(value)
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-}
-
-
-/* =========================================
-   SAFE URL CHECK
-========================================= */
-
-function isSafeURL(url) {
-
-  try {
-
-    const parsed =
-      new URL(url);
-
-    return (
-      parsed.protocol === "http:" ||
-      parsed.protocol === "https:"
-    );
-
-  } catch {
-
-    return false;
-  }
-}
-
-
-/* =========================================
-   FORMAT INLINE MARKDOWN
-========================================= */
-
-function formatInline(value) {
-
-  let text =
-    escapeHTML(value);
-
-
-  /* =====================================
-     MARKDOWN LINKS
-  ===================================== */
-
-  text = text.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-    function(
-      match,
-      label,
-      url
-    ) {
-
-      if (!isSafeURL(url)) {
-
-        return label;
-      }
-
-      return `
-        <a
-          href="${url}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ${label}
-        </a>
-      `;
-    }
-  );
-
-
-  /* =====================================
-     BOLD
-  ===================================== */
-
-  text = text.replace(
-    /\*\*(.*?)\*\*/g,
-    "<strong>$1</strong>"
-  );
-
-
-  /* =====================================
-     ITALIC
-  ===================================== */
-
-  text = text.replace(
-    /(?<!\*)\*(.*?)\*(?!\*)/g,
-    "<em>$1</em>"
-  );
-
-
-  return text;
-}
-
-
-/* =========================================
-   SOURCE PANEL
-========================================= */
-
-function formatSources(sources) {
-
-  if (
-    !Array.isArray(sources) ||
-    sources.length === 0
-  ) {
-
-    return "";
-  }
-
-
-  let html = `
-    <div class="sources-panel">
-
-      <div class="sources-header">
-
-        <div class="sources-icon">
-          🔎
-        </div>
-
-        <div>
-
-          <div class="sources-title">
-            Sources
-          </div>
-
-          <div class="sources-subtitle">
-            Retrieved from live web search
-          </div>
-
-        </div>
-
-      </div>
-
-      <div class="sources-list">
-  `;
-
-
-  sources.forEach(
-    (
-      source,
-      index
-    ) => {
-
-      const title =
-        escapeHTML(
-          source.title ||
-          `Source ${index + 1}`
+    workflowNodes.forEach(node => {
+        node.classList.remove(
+            "active",
+            "completed",
+            "error"
         );
+    });
+}
 
 
-      const url =
-        source.url || "";
+function activateWorkflow(index) {
+    workflowNodes.forEach((node, i) => {
+        node.classList.remove("active", "completed");
+
+        if (i < index) {
+            node.classList.add("completed");
+        }
+
+        if (i === index) {
+            node.classList.add("active");
+        }
+    });
+}
 
 
-      if (!isSafeURL(url)) {
-
-        return;
-      }
-
-
-      const safeURL =
-        escapeHTML(url);
+function completeWorkflow() {
+    workflowNodes.forEach(node => {
+        node.classList.remove("active");
+        node.classList.add("completed");
+    });
+}
 
 
-      html += `
-        <div class="source-card">
+/* =========================
+   TOOL CHAIN
+========================= */
 
-          <div class="source-number">
-            ${String(
-              index + 1
-            ).padStart(2, "0")}
-          </div>
+function showToolChain(tools) {
 
-          <div class="source-info">
+    if (!toolChain) return;
 
-            <div class="source-title">
-              ${title}
+    toolChain.innerHTML = "";
+
+    if (!tools || tools.length === 0) {
+        toolChain.innerHTML = `
+            <div class="tool-empty">
+                No tools used
             </div>
+        `;
+        return;
+    }
 
+    tools.forEach(item => {
+
+        const tool = item.tool || "unknown";
+
+        let displayName = tool;
+
+        if (tool === "calculator") {
+            displayName = "Calculator";
+        }
+
+        else if (tool === "web_search") {
+            displayName = "Web Search";
+        }
+
+        else if (tool === "quiz_generator") {
+            displayName = "Quiz Generator";
+        }
+
+        else if (tool === "study_plan_generator") {
+            displayName = "Study Plan Generator";
+        }
+
+        else if (tool === "weak_topic_detector") {
+            displayName = "Weak Topic Detector";
+        }
+
+        else if (tool === "quiz_result_analyzer") {
+            displayName = "Quiz Result Analyzer";
+        }
+
+        const toolItem = document.createElement("div");
+
+        toolItem.className = "tool-item";
+
+        toolItem.innerHTML = `
+            <span class="tool-icon">⚙️</span>
+            <span>${displayName}</span>
+        `;
+
+        toolChain.appendChild(toolItem);
+    });
+}
+
+
+/* =========================
+   SOURCES
+========================= */
+
+function showSources(sources) {
+
+    if (!sourcePanel) return;
+
+    sourcePanel.innerHTML = "";
+
+    if (!sources || sources.length === 0) {
+        sourcePanel.innerHTML = `
+            <div class="source-empty">
+                No external sources used.
+            </div>
+        `;
+        return;
+    }
+
+    const title = document.createElement("h3");
+
+    title.textContent = "Sources";
+
+    sourcePanel.appendChild(title);
+
+    sources.forEach(source => {
+
+        const sourceItem = document.createElement("div");
+
+        sourceItem.className = "source-item";
+
+        sourceItem.innerHTML = `
             <a
-              class="source-link"
-              href="${safeURL}"
-              target="_blank"
-              rel="noopener noreferrer"
+                href="${source.url || "#"}"
+                target="_blank"
+                rel="noopener noreferrer"
             >
-              Open Source ↗
+                ${source.title || "Source"}
             </a>
 
-          </div>
+            <p>
+                ${source.content || ""}
+            </p>
+        `;
 
+        sourcePanel.appendChild(sourceItem);
+    });
+}
+
+
+/* =========================
+   ASK AGENT
+========================= */
+
+async function askAgent(question) {
+
+    resetWorkflow();
+
+    activateWorkflow(0);
+
+    answerBox.innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Agent is thinking...</p>
         </div>
-      `;
-    }
-  );
+    `;
 
-
-  html += `
-      </div>
-
-    </div>
-  `;
-
-
-  return html;
-}
-
-
-/* =========================================
-   CREATE DYNAMIC TOOL NODE
-========================================= */
-
-function createToolNode(
-  displayName,
-  index,
-  parent
-) {
-
-  /*
-     Arrow before every additional tool.
-  */
-
-  const arrow =
-    document.createElement(
-      "div"
-    );
-
-  arrow.className =
-    "arrow dynamic-tool-arrow";
-
-  arrow.innerText =
-    "→";
-
-
-  parent.appendChild(
-    arrow
-  );
-
-
-  /*
-     Create tool node.
-  */
-
-  const node =
-    document.createElement(
-      "div"
-    );
-
-  node.className =
-    "node dynamic-tool-node";
-
-  node.id =
-    `dynamicToolNode${index}`;
-
-
-  node.innerHTML = `
-    <div class="node-title">
-      ${escapeHTML(displayName)}
-    </div>
-
-    <div class="node-status">
-      Waiting
-    </div>
-  `;
-
-
-  parent.appendChild(
-    node
-  );
-
-
-  return node;
-}
-
-
-/* =========================================
-   UPDATE TOOL NODE
-========================================= */
-
-async function animateToolNode(
-  node,
-  displayName,
-  success
-) {
-
-  if (!node) return;
-
-
-  const titleElement =
-    node.querySelector(
-      ".node-title"
-    );
-
-  const statusElement =
-    node.querySelector(
-      ".node-status"
-    );
-
-
-  if (
-    titleElement
-  ) {
-
-    titleElement.innerText =
-      displayName;
-  }
-
-
-  node.classList.remove(
-    "active",
-    "completed",
-    "error"
-  );
-
-
-  /*
-     Tool running
-  */
-
-  statusElement.innerText =
-    `⏳ ${displayName}`;
-
-  node.classList.add(
-    "active"
-  );
-
-
-  await sleep(700);
-
-
-  node.classList.remove(
-    "active"
-  );
-
-
-  /*
-     Tool completed
-  */
-
-  if (success) {
-
-    statusElement.innerText =
-      `✓ ${displayName}`;
-
-    node.classList.add(
-      "completed"
-    );
-
-  } else {
-
-    statusElement.innerText =
-      `✗ ${displayName}`;
-
-    node.classList.add(
-      "error"
-    );
-  }
-
-
-  await sleep(400);
-}
-
-
-/* =========================================
-   SHOW ACTUAL TOOL CHAIN
-========================================= */
-
-async function showToolChain(
-  actualTools
-) {
-
-  const toolNode =
-    document.getElementById(
-      "toolNode"
-    );
-
-
-  if (!toolNode) return;
-
-
-  const toolsParent =
-    toolNode.parentElement;
-
-
-  /*
-     No actual tools
-  */
-
-  if (
-    actualTools.length === 0
-  ) {
-
-    const titleElement =
-      toolNode.querySelector(
-        ".node-title"
-      );
-
-    const statusElement =
-      toolNode.querySelector(
-        ".node-status"
-      );
-
-
-    if (titleElement) {
-
-      titleElement.innerText =
-        "💡 Direct Answer";
+    if (sourcePanel) {
+        sourcePanel.innerHTML = "";
     }
 
+    try {
 
-    statusElement.innerText =
-      "✓ Direct Answer";
+        activateWorkflow(1);
+
+        const response = await fetch(BACKEND_URL, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                question: question,
+                session_id: getSessionId()
+            })
+        });
 
 
-    toolNode.classList.remove(
-      "active",
-      "error"
+        if (!response.ok) {
+            throw new Error(
+                `Backend error: ${response.status}`
+            );
+        }
+
+
+        activateWorkflow(2);
+
+
+        const data = await response.json();
+
+
+        activateWorkflow(3);
+
+
+        /*
+         * Remove router/final-response
+         * from visible tool chain.
+         */
+        const actualTools =
+            Array.isArray(data.tool_trace)
+                ? data.tool_trace.filter(
+                    item =>
+                        item.tool !== "education_router" &&
+                        item.tool !== "final_response"
+                )
+                : [];
+
+
+        showToolChain(actualTools);
+
+        showSources(data.sources || []);
+
+
+        /*
+         * Quiz JSON gets rendered as
+         * interactive quiz.
+         *
+         * Normal answers continue to
+         * use formatAnswer().
+         */
+        answerBox.innerHTML = `
+            <div class="answer-content">
+                ${renderQuiz(data.answer) || formatAnswer(data.answer)}
+            </div>
+        `;
+
+
+        completeWorkflow();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        workflowNodes.forEach(node => {
+            node.classList.remove(
+                "active",
+                "completed"
+            );
+
+            node.classList.add("error");
+        });
+
+
+        answerBox.innerHTML = `
+            <div class="error-message">
+                <strong>Something went wrong.</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+
+/* =========================
+   FORM SUBMIT
+========================= */
+
+if (chatForm) {
+
+    chatForm.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+            const question =
+                questionInput.value.trim();
+
+            if (!question) return;
+
+            await askAgent(question);
+        }
+    );
+}
+
+
+/* =========================
+   ENTER KEY
+========================= */
+
+if (questionInput) {
+
+    questionInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                if (chatForm) {
+                    chatForm.requestSubmit();
+                }
+            }
+        }
+    );
+}
+
+
+/* =========================
+   FORMAT NORMAL ANSWER
+========================= */
+
+function formatAnswer(text) {
+
+    if (!text) {
+        return "";
+    }
+
+    let formatted = String(text);
+
+
+    /* Escape HTML first */
+
+    formatted = formatted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+
+    /* Markdown headings */
+
+    formatted = formatted.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
     );
 
-    toolNode.classList.add(
-      "completed"
+    formatted = formatted.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    formatted = formatted.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
     );
 
 
-    return;
-  }
+    /* Bold */
+
+    formatted = formatted.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
 
 
-  const toolNames = {
+    /* Italic */
 
-    calculator:
-      "🧮 Calculator",
-
-    web_search:
-      "🔎 SerpApi",
-
-    quiz_generator:
-      "📝 Quiz Generator",
-
-    study_plan_generator:
-      "📅 Study Planner"
-  };
+    formatted = formatted.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
 
 
-  /*
-     Display every actual tool
-     in execution order.
-  */
+    /* Links */
 
-  for (
-    let i = 0;
-    i < actualTools.length;
-    i++
-  ) {
-
-    const tool =
-      actualTools[i];
+    formatted = formatted.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
 
 
-    const displayName =
-      toolNames[tool.tool] ||
-      `🔧 ${tool.tool}`;
+    /* Numbered lists */
+
+    formatted = formatted.replace(
+        /(?:^|\n)(\d+)\.\s+(.*)/g,
+        '<div class="numbered-item"><span>$1.</span> $2</div>'
+    );
 
 
-    let currentNode;
+    /* Bullet lists */
+
+    formatted = formatted.replace(
+        /(?:^|\n)[-*]\s+(.*)/g,
+        '<div class="bullet-item">• $1</div>'
+    );
+
+
+    /* Tables */
+
+    formatted = formatted.replace(
+        /\|(.+)\|/g,
+        function(match) {
+
+            const cells = match
+                .split("|")
+                .slice(1, -1)
+                .map(cell => cell.trim());
+
+            if (cells.length === 0) {
+                return match;
+            }
+
+            return `
+                <div class="table-row">
+                    ${cells
+                        .map(cell => `<div>${cell}</div>`)
+                        .join("")}
+                </div>
+            `;
+        }
+    );
+
+
+    /* Line breaks */
+
+    formatted = formatted.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return formatted;
+}
+
+
+/* =====================================================
+   INTERACTIVE QUIZ
+===================================================== */
+
+function renderQuiz(answer) {
+
+    if (!answer) {
+        return "";
+    }
+
+
+    let quiz;
 
 
     /*
-       First tool uses original
-       tool node.
-    */
+     * Backend currently returns quiz
+     * JSON as a string.
+     */
+    try {
 
-    if (i === 0) {
+        quiz =
+            typeof answer === "string"
+                ? JSON.parse(answer)
+                : answer;
 
-      currentNode =
-        toolNode;
+    } catch (error) {
 
-    } else {
+        /*
+         * Not quiz JSON.
+         */
+        return "";
+    }
 
-      /*
-         Additional tools get
-         dynamically created nodes.
-      */
 
-      currentNode =
-        createToolNode(
-          displayName,
-          i,
-          toolsParent
+    /*
+     * Validate quiz structure.
+     */
+
+    if (
+        !quiz ||
+        !Array.isArray(quiz.questions) ||
+        quiz.questions.length === 0
+    ) {
+        return "";
+    }
+
+
+    const quizId =
+        `quiz-${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(2)}`;
+
+
+    /*
+     * Initialize after HTML has
+     * been inserted into DOM.
+     */
+    setTimeout(() => {
+
+        const quizElement =
+            document.getElementById(quizId);
+
+        if (!quizElement) return;
+
+        initializeQuiz(
+            quizElement,
+            quiz.questions,
+            quiz
         );
-    }
 
+    }, 0);
 
-    await animateToolNode(
-      currentNode,
-      displayName,
-      tool.status === "success"
-    );
-  }
-}
 
-
-/* =========================================
-   ASK AGENT
-========================================= */
-
-async function askAgent() {
-
-  const input =
-    document.getElementById(
-      "questionInput"
-    );
-
-  const button =
-    document.getElementById(
-      "askButton"
-    );
-
-  const responseSection =
-    document.getElementById(
-      "responseSection"
-    );
-
-  const answerBox =
-    document.getElementById(
-      "answerBox"
-    );
-
-
-  const question =
-    input.value.trim();
-
-
-  if (!question) {
-
-    alert(
-      "Please enter a question."
-    );
-
-    return;
-  }
-
-
-  button.disabled =
-    true;
-
-  button.innerText =
-    "Agent Working...";
-
-
-  responseSection.style.display =
-    "block";
-
-
-  answerBox.innerHTML = `
-    <div class="ai-loading">
-
-      <span>🤔</span>
-
-      <div>
-
-        <strong>
-          EduAgent is thinking...
-        </strong>
-
-        <small>
-          Analyzing your question
-        </small>
-
-      </div>
-
-    </div>
-  `;
-
-
-  resetWorkflow();
-
-
-  try {
-
-    /* =====================================
-       USER
-    ===================================== */
-
-    setNode(
-      "userNode",
-      "⏳ Processing",
-      true
-    );
-
-
-    await sleep(500);
-
-
-    setNode(
-      "userNode",
-      "✓ Received"
-    );
-
-
-    /* =====================================
-       ROUTER
-    ===================================== */
-
-    setNode(
-      "routerNode",
-      "⏳ Routing...",
-      true
-    );
-
-
-    /* =====================================
-       BACKEND REQUEST
-    ===================================== */
-
-    const response =
-      await fetch(
-        BACKEND_URL,
-        {
-          method:
-            "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-          JSON.stringify({
-          question:
-          question,
-          session_id:
-          getSessionId()
-  })
-            
-              
-                
-            
-        }
-      );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        `Server error: ${response.status}`
-      );
-    }
-
-
-    const data =
-      await response.json();
-
-
-    /* =====================================
-       ROUTER COMPLETE
-    ===================================== */
-
-    setNode(
-      "routerNode",
-      "✓ Completed"
-    );
-
-
-    await sleep(400);
-
-
-    /* =====================================
-       DETECT ACTUAL TOOLS
-    ===================================== */
-
-    const actualTools =
-      Array.isArray(
-        data.tool_trace
-      )
-        ? data.tool_trace.filter(
-            item =>
-              item.tool !==
-                "education_router" &&
-              item.tool !==
-                "final_response"
-          )
-        : [];
-
-
-    console.log(
-      "TOOL TRACE:",
-      data.tool_trace
-    );
-
-
-    console.log(
-      "ACTUAL TOOLS:",
-      actualTools
-    );
-
-
-    /* =====================================
-       SHOW ACTUAL TOOL CHAIN
-    ===================================== */
-
-    await showToolChain(
-      actualTools
-    );
-
-
-    /* =====================================
-       RESPONSE NODE
-    ===================================== */
-
-    setNode(
-      "responseNode",
-      "⏳ Generating...",
-      true
-    );
-
-
-    await sleep(600);
-
-
-    setNode(
-      "responseNode",
-      "✓ Generated"
-    );
-
-
-    /* =====================================
-       PREMIUM AI RESPONSE
-    ===================================== */
-
-    answerBox.innerHTML = `
-
-      <div class="answer-header">
-
-        <div class="ai-avatar">
-          🧠
-        </div>
-
-        <div>
-
-          <div class="answer-title">
-            EduAgent AI
-          </div>
-
-          <div class="answer-subtitle">
-            Intelligent education response
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="answer-divider"></div>
-
-
-      <div class="answer-content">
-
-        ${formatAnswer(
-          data.answer
-        )}
-
-      </div>
-
-
-      ${formatSources(
-        data.sources
-      )}
-
-    `;
-
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-
-    setNode(
-      "routerNode",
-      "⚠ Error"
-    );
-
-
-    setNode(
-      "toolNode",
-      "⚠ Failed"
-    );
-
-
-    setNode(
-      "responseNode",
-      "⚠ Failed"
-    );
-
-
-    answerBox.innerHTML = `
-
-      <div class="error-card">
-
-        <div class="error-icon">
-          ⚠️
-        </div>
-
-        <div>
-
-          <strong>
-            Unable to connect to EduAgent
-          </strong>
-
-          <p>
-            Please try again in a moment.
-          </p>
-
-        </div>
-
-      </div>
-
-    `;
-  }
-
-
-  button.disabled =
-    false;
-
-  button.innerText =
-    "Ask EduAgent";
-}
-
-
-/* =========================================
-   FORMAT AI ANSWER
-========================================= */
-
-function formatAnswer(answer) {
-
-  if (!answer) {
+    /*
+     * Return initial quiz container.
+     */
 
     return `
-      <p>
-        No answer received.
-      </p>
+        <div
+            id="${quizId}"
+            class="interactive-quiz"
+        >
+            <div class="quiz-loading">
+                Loading quiz...
+            </div>
+        </div>
     `;
-  }
+}
 
 
-  /* =====================================
-     NORMALIZE NEWLINES
-  ===================================== */
+/* =====================================================
+   QUIZ ENGINE
+===================================================== */
 
-  let raw =
-    String(answer)
-      .replace(
-        /\r\n/g,
-        "\n"
-      )
-      .replace(
-        /\r/g,
-        "\n"
-      )
-      .trim();
+function initializeQuiz(
+    quizElement,
+    questions,
+    quiz
+) {
 
+    let currentQuestion = 0;
 
-  const lines =
-    raw.split("\n");
+    let score = 0;
 
 
-  let output =
-    "";
+    /*
+     * Load question.
+     */
 
+    function loadQuestion() {
 
-  let tableRows =
-    [];
+        const question =
+            questions[currentQuestion];
 
 
-  let insideTable =
-    false;
-
-
-  /* =====================================
-     RENDER TABLE
-  ===================================== */
-
-  function renderTable(rows) {
-
-    if (
-      rows.length < 2
-    ) {
-
-      return "";
-    }
-
-
-    const header =
-      rows[0]
-        .split("|")
-        .map(
-          cell =>
-            cell.trim()
-        )
-        .filter(
-          cell =>
-            cell !== ""
-        );
-
-
-    const bodyRows =
-      rows
-        .slice(2)
-        .map(
-          row =>
-            row
-              .split("|")
-              .map(
-                cell =>
-                  cell.trim()
-              )
-              .filter(
-                cell =>
-                  cell !== ""
-              )
-        )
-        .filter(
-          row =>
-            row.length > 0
-        );
-
-
-    if (
-      header.length === 0
-    ) {
-
-      return "";
-    }
-
-
-    let table = `
-      <div class="ai-table-wrapper">
-
-        <table class="ai-table">
-
-          <thead>
-
-            <tr>
-    `;
-
-
-    header.forEach(
-      cell => {
-
-        table += `
-          <th>
-            ${formatInline(
-              cell
-            )}
-          </th>
-        `;
-      }
-    );
-
-
-    table += `
-            </tr>
-
-          </thead>
-
-          <tbody>
-    `;
-
-
-    bodyRows.forEach(
-      row => {
-
-        if (
-          !row.length
-        ) return;
-
-
-        table += `
-          <tr>
-        `;
-
-
-        row.forEach(
-          cell => {
-
-            table += `
-              <td>
-                ${formatInline(
-                  cell
-                )}
-              </td>
-            `;
-          }
-        );
-
-
-        table += `
-          </tr>
-        `;
-      }
-    );
-
-
-    table += `
-          </tbody>
-
-        </table>
-
-      </div>
-    `;
-
-
-    return table;
-  }
-
-
-  /* =====================================
-     PROCESS LINES
-  ===================================== */
-
-  lines.forEach(
-    line => {
-
-      const trimmed =
-        line.trim();
-
-
-      /* ===================================
-         IGNORE EMPTY LINES
-      =================================== */
-
-      if (
-        trimmed === ""
-      ) {
-
-        return;
-      }
-
-
-      /* ===================================
-         TABLE LINE
-      =================================== */
-
-      if (
-        trimmed.startsWith("|") &&
-        trimmed.endsWith("|")
-      ) {
-
-        if (
-          !insideTable
-        ) {
-
-          insideTable =
-            true;
-
-          tableRows =
-            [];
+        if (!question) {
+            showQuizResult();
+            return;
         }
 
 
-        tableRows.push(
-          trimmed
+        quizElement.innerHTML = `
+            <div class="quiz-header">
+
+                <div class="quiz-title">
+                    ${escapeHTML(
+                        quiz.topic ||
+                        quiz.subject ||
+                        "Interactive Quiz"
+                    )}
+                </div>
+
+                <div class="quiz-progress">
+                    Question
+                    ${currentQuestion + 1}
+                    of
+                    ${questions.length}
+                </div>
+
+            </div>
+
+
+            <div class="quiz-question">
+
+                <h3>
+                    ${escapeHTML(
+                        question.question || ""
+                    )}
+                </h3>
+
+
+                <div class="quiz-options">
+
+                    ${createQuizOptions(question)}
+
+                </div>
+
+
+                <div
+                    class="quiz-feedback"
+                    id="quiz-feedback"
+                ></div>
+
+
+                <button
+                    class="quiz-next"
+                    id="quiz-next"
+                    disabled
+                >
+                    ${currentQuestion === questions.length - 1
+                        ? "Finish Quiz"
+                        : "Next Question"}
+                </button>
+
+            </div>
+        `;
+
+
+        const optionButtons =
+            quizElement.querySelectorAll(
+                ".quiz-option"
+            );
+
+
+        const nextButton =
+            quizElement.querySelector(
+                "#quiz-next"
+            );
+
+
+        optionButtons.forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    /*
+                     * Prevent changing answer
+                     * after selection.
+                     */
+                    if (
+                        button.disabled
+                    ) {
+                        return;
+                    }
+
+
+                    const selected =
+                        button.dataset.option;
+
+
+                    handleAnswer(
+                        question,
+                        selected,
+                        optionButtons,
+                        nextButton
+                    );
+                }
+            );
+        });
+
+
+        nextButton.addEventListener(
+            "click",
+            () => {
+
+                currentQuestion++;
+
+                if (
+                    currentQuestion >=
+                    questions.length
+                ) {
+
+                    showQuizResult();
+
+                } else {
+
+                    loadQuestion();
+                }
+            }
+        );
+    }
+
+
+    /*
+     * Handle selected answer.
+     */
+
+    function handleAnswer(
+        question,
+        selected,
+        optionButtons,
+        nextButton
+    ) {
+
+        const correct =
+            String(
+                question.correct_answer || ""
+            ).trim().toUpperCase();
+
+
+        const selectedValue =
+            String(selected)
+                .trim()
+                .toUpperCase();
+
+
+        const feedback =
+            quizElement.querySelector(
+                "#quiz-feedback"
+            );
+
+
+        optionButtons.forEach(button => {
+
+            button.disabled = true;
+
+            const option =
+                button.dataset.option
+                    .trim()
+                    .toUpperCase();
+
+
+            if (option === correct) {
+
+                button.classList.add(
+                    "correct"
+                );
+            }
+
+
+            if (
+                option === selectedValue &&
+                selectedValue !== correct
+            ) {
+
+                button.classList.add(
+                    "wrong"
+                );
+            }
+        });
+
+
+        if (
+            selectedValue === correct
+        ) {
+
+            score++;
+
+            feedback.innerHTML = `
+                <div class="quiz-correct">
+                    ✓ Correct!
+                    <p>
+                        ${escapeHTML(
+                            question.explanation ||
+                            "Good job!"
+                        )}
+                    </p>
+                </div>
+            `;
+
+        } else {
+
+            const correctText =
+                question.options &&
+                question.options[correct]
+                    ? question.options[correct]
+                    : correct;
+
+
+            feedback.innerHTML = `
+                <div class="quiz-wrong">
+                    ✗ Not quite.
+
+                    <p>
+                        Correct answer:
+                        <strong>
+                            ${escapeHTML(
+                                correct
+                            )}
+                        </strong>
+                        —
+                        ${escapeHTML(
+                            correctText
+                        )}
+                    </p>
+
+                    <p>
+                        ${escapeHTML(
+                            question.explanation ||
+                            ""
+                        )}
+                    </p>
+                </div>
+            `;
+        }
+
+
+        nextButton.disabled = false;
+    }
+
+
+    /*
+     * Final result.
+     */
+
+    function showQuizResult() {
+
+        const total =
+            questions.length;
+
+
+        const percentage =
+            total > 0
+                ? Math.round(
+                    (score / total) * 100
+                )
+                : 0;
+
+
+        let message;
+
+
+        if (percentage >= 80) {
+
+            message =
+                "Excellent work!";
+
+        } else if (percentage >= 60) {
+
+            message =
+                "Good job! Keep practicing.";
+
+        } else {
+
+            message =
+                "Keep practicing and try again.";
+        }
+
+
+        quizElement.innerHTML = `
+            <div class="quiz-result">
+
+                <div class="quiz-result-icon">
+                    🎯
+                </div>
+
+                <h2>
+                    Quiz Complete
+                </h2>
+
+                <div class="quiz-score">
+                    ${score} / ${total}
+                </div>
+
+                <div class="quiz-percentage">
+                    ${percentage}%
+                </div>
+
+                <p>
+                    ${message}
+                </p>
+
+                <button
+                    class="quiz-restart"
+                    id="quiz-restart"
+                >
+                    Try Again
+                </button>
+
+            </div>
+        `;
+
+
+        const restartButton =
+            quizElement.querySelector(
+                "#quiz-restart"
+            );
+
+
+        restartButton.addEventListener(
+            "click",
+            () => {
+
+                /*
+                 * Reinitialize the same quiz.
+                 */
+                initializeQuiz(
+                    quizElement,
+                    questions,
+                    quiz
+                );
+            }
+        );
+    }
+
+
+    /*
+     * Start first question.
+     */
+
+    loadQuestion();
+}
+
+
+/* =====================================================
+   QUIZ OPTIONS HTML
+===================================================== */
+
+function createQuizOptions(question) {
+
+    if (
+        !question ||
+        !question.options
+    ) {
+        return "";
+    }
+
+
+    const optionEntries =
+        Object.entries(
+            question.options
         );
 
-        return;
-      }
 
+    return optionEntries
+        .map(([key, value]) => {
 
-      /* ===================================
-         FINISH TABLE
-      =================================== */
+            return `
+                <button
+                    type="button"
+                    class="quiz-option"
+                    data-option="${escapeHTML(key)}"
+                >
 
-      if (
-        insideTable
-      ) {
+                    <span class="quiz-option-key">
+                        ${escapeHTML(key)}
+                    </span>
 
-        output +=
-          renderTable(
-            tableRows
-          );
+                    <span class="quiz-option-text">
+                        ${escapeHTML(value)}
+                    </span>
 
-        tableRows =
-          [];
+                </button>
+            `;
 
-        insideTable =
-          false;
-      }
-
-
-      /* ===================================
-         HEADING
-      =================================== */
-
-      if (
-        trimmed.startsWith(
-          "### "
-        )
-      ) {
-
-        output += `
-          <h4>
-            ${formatInline(
-              trimmed.substring(
-                4
-              )
-            )}
-          </h4>
-        `;
-
-        return;
-      }
-
-
-      if (
-        trimmed.startsWith(
-          "## "
-        )
-      ) {
-
-        output += `
-          <h3>
-            ${formatInline(
-              trimmed.substring(
-                3
-              )
-            )}
-          </h3>
-        `;
-
-        return;
-      }
-
-
-      if (
-        trimmed.startsWith(
-          "# "
-        )
-      ) {
-
-        output += `
-          <h2>
-            ${formatInline(
-              trimmed.substring(
-                2
-              )
-            )}
-          </h2>
-        `;
-
-        return;
-      }
-
-
-      /* ===================================
-         BULLET
-      =================================== */
-
-      if (
-        trimmed.startsWith("• ") ||
-        trimmed.startsWith("- ")
-      ) {
-
-        const bulletText =
-          trimmed.substring(
-            2
-          );
-
-
-        output += `
-          <div class="answer-bullet">
-            ${formatInline(
-              bulletText
-            )}
-          </div>
-        `;
-
-        return;
-      }
-
-
-      /* ===================================
-         NUMBERED LIST
-      =================================== */
-
-      if (
-        /^\d+\.\s+/.test(
-          trimmed
-        )
-      ) {
-
-        const numberText =
-          trimmed.replace(
-            /^\d+\.\s+/,
-            ""
-          );
-
-
-        output += `
-          <div class="answer-number">
-            ${formatInline(
-              numberText
-            )}
-          </div>
-        `;
-
-        return;
-      }
-
-
-      /* ===================================
-         HORIZONTAL LINE
-      =================================== */
-
-      if (
-        trimmed === "---"
-      ) {
-
-        output +=
-          "<hr>";
-
-        return;
-      }
-
-
-      /* ===================================
-         NORMAL TEXT
-      =================================== */
-
-      output += `
-        <p>
-          ${formatInline(
-            trimmed
-          )}
-        </p>
-      `;
-
-    }
-  );
-
-
-  /* =====================================
-     FINAL TABLE
-  ===================================== */
-
-  if (
-    insideTable
-  ) {
-
-    output +=
-      renderTable(
-        tableRows
-      );
-  }
-
-
-  /* =====================================
-     FINAL CLEANUP
-  ===================================== */
-
-  return output.trim();
+        })
+        .join("");
 }
+
+
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
+
+function escapeHTML(value) {
+
+    if (value === null ||
+        value === undefined) {
+
+        return "";
+    }
+
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
   
 
