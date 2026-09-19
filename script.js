@@ -25,14 +25,25 @@ function getSessionId() {
    DOM ELEMENTS
 ========================= */
 
-const chatForm = document.getElementById("chat-form");
-const questionInput = document.getElementById("question");
-const answerBox = document.getElementById("answer-box");
+const chatForm = null;
 
-const toolChain = document.getElementById("tool-chain");
-const sourcePanel = document.getElementById("source-panel");
+const questionInput =
+    document.getElementById("questionInput");
 
-const workflowNodes = document.querySelectorAll(".workflow-node");
+const answerBox =
+    document.getElementById("answerBox");
+
+const responseSection =
+    document.getElementById("responseSection");
+
+const toolChain =
+    document.getElementById("tool-chain");
+
+const sourcePanel =
+    document.getElementById("source-panel");
+
+const workflowNodes =
+    document.querySelectorAll(".node");
 
 
 /* =========================
@@ -192,7 +203,19 @@ function showSources(sources) {
 
 async function askAgent(question) {
 
+    question =
+        question ||
+        questionInput.value.trim();
+
+    if (!question) return;
+
+    if (responseSection) {
+        responseSection.style.display = "block";
+    }
+
     resetWorkflow();
+
+    
 
     activateWorkflow(0);
 
