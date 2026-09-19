@@ -51,37 +51,83 @@ const workflowNodes =
 ========================= */
 
 function resetWorkflow() {
-    workflowNodes.forEach(node => {
-        node.classList.remove(
-            "active",
-            "completed",
-            "error"
-        );
-    });
+
+    const statuses = {
+        userStatus: "Waiting",
+        routerStatus: "Waiting",
+        toolStatus: "Waiting",
+        responseStatus: "Waiting"
+    };
+
+    Object.entries(statuses).forEach(
+        ([id, text]) => {
+
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+                element.textContent = text;
+            }
+        }
+    );
 }
 
 
 function activateWorkflow(index) {
-    workflowNodes.forEach((node, i) => {
-        node.classList.remove("active", "completed");
 
-        if (i < index) {
-            node.classList.add("completed");
-        }
+    const statusIds = [
+        "userStatus",
+        "routerStatus",
+        "toolStatus",
+        "responseStatus"
+    ];
 
-        if (i === index) {
-            node.classList.add("active");
+    statusIds.forEach(
+        (id, i) => {
+
+            const element =
+                document.getElementById(id);
+
+            if (!element) return;
+
+            if (i < index) {
+                element.textContent = "Completed";
+            }
+
+            else if (i === index) {
+                element.textContent = "Processing...";
+            }
+
+            else {
+                element.textContent = "Waiting";
+            }
         }
-    });
+    );
 }
 
 
 function completeWorkflow() {
-    workflowNodes.forEach(node => {
-        node.classList.remove("active");
-        node.classList.add("completed");
+
+    const statusIds = [
+        "userStatus",
+        "routerStatus",
+        "toolStatus",
+        "responseStatus"
+    ];
+
+    statusIds.forEach(id => {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.textContent = "Completed";
+        }
     });
 }
+
+
+
 
 
 /* =========================
