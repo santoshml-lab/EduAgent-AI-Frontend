@@ -1091,8 +1091,10 @@ function formatAnswer(text) {
 
 
         /*
-         * Check whether this is a possible
-         * Markdown table header.
+         * Detect Markdown table
+         *
+         * | Day | Topic | Activity |
+         * |-----|-------|----------|
          */
 
         if (
@@ -1107,13 +1109,6 @@ function formatAnswer(text) {
             const separatorCells =
                 parseTableRow(lines[i + 1]);
 
-
-            /*
-             * A valid Markdown table must have:
-             *
-             * | Header | Header |
-             * |--------|--------|
-             */
 
             const validSeparator =
                 separatorCells.length > 0 &&
@@ -1130,22 +1125,61 @@ function formatAnswer(text) {
                 validSeparator
             ) {
 
-                let tableHTML =
-                    `<div class="table-wrapper">
-                        <table class="markdown-table">
-                            <thead>
-                                <tr>`;
-
-
                 /*
-                 * Header
+                 * Responsive wrapper
                  */
+                let tableHTML = `
+                    <div
+                        class="table-wrapper"
+                        style="
+                            width:100%;
+                            max-width:100%;
+                            overflow-x:auto;
+                            overflow-y:hidden;
+                            -webkit-overflow-scrolling:touch;
+                            margin:16px 0;
+                        "
+                    >
+
+                        <table
+                            class="markdown-table"
+                            style="
+                                width:100%;
+                                max-width:100%;
+                                table-layout:fixed;
+                                border-collapse:collapse;
+                            "
+                        >
+
+                            <colgroup>
+                                <col style="width:15%;">
+                                <col style="width:30%;">
+                                <col style="width:55%;">
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                `;
+
+
+                /* =================================================
+                   HEADER
+                ================================================= */
 
                 headerCells.forEach(
                     cell => {
 
                         tableHTML += `
-                            <th>
+                            <th
+                                style="
+                                    padding:12px 10px;
+                                    text-align:left;
+                                    vertical-align:top;
+                                    white-space:normal;
+                                    overflow-wrap:anywhere;
+                                    word-break:break-word;
+                                "
+                            >
                                 ${cell}
                             </th>
                         `;
@@ -1156,20 +1190,24 @@ function formatAnswer(text) {
                 tableHTML += `
                                 </tr>
                             </thead>
+
                             <tbody>
                 `;
 
 
                 /*
-                 * Skip header + separator
+                 * Skip:
+                 *
+                 * header
+                 * separator
                  */
 
                 i += 2;
 
 
-                /*
-                 * Table body
-                 */
+                /* =================================================
+                   TABLE BODY
+                ================================================= */
 
                 while (
                     i < lines.length
@@ -1183,7 +1221,6 @@ function formatAnswer(text) {
                         !bodyLine.startsWith("|") ||
                         !bodyLine.endsWith("|")
                     ) {
-
                         break;
                     }
 
@@ -1197,7 +1234,9 @@ function formatAnswer(text) {
                     if (
                         cells.length === 0
                     ) {
+
                         i++;
+
                         continue;
                     }
 
@@ -1211,7 +1250,16 @@ function formatAnswer(text) {
                         cell => {
 
                             tableHTML += `
-                                <td>
+                                <td
+                                    style="
+                                        padding:12px 10px;
+                                        text-align:left;
+                                        vertical-align:top;
+                                        white-space:normal;
+                                        overflow-wrap:anywhere;
+                                        word-break:break-word;
+                                    "
+                                >
                                     ${cell}
                                 </td>
                             `;
@@ -1230,7 +1278,9 @@ function formatAnswer(text) {
 
                 tableHTML += `
                             </tbody>
+
                         </table>
+
                     </div>
                 `;
 
@@ -1245,9 +1295,9 @@ function formatAnswer(text) {
         }
 
 
-        /*
-         * Normal line
-         */
+        /* =================================================
+           NORMAL LINE
+        ================================================= */
 
         output.push(
             line
@@ -1323,6 +1373,21 @@ function formatAnswer(text) {
 
     return formatted;
 }
+
+    
+
+    
+
+    
+
+            
+                                
+                 
+                    
+                    
+    
+    
+    
 
 
 /* =====================================================
