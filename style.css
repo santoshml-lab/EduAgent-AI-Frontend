@@ -1328,5 +1328,48 @@ body {
     }
 }
 
+/* =====================================================
+   MARKDOWN TABLE
+===================================================== */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 18px 0;
+    border-radius: 12px;
+}
+
+.markdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+    font-size: 14px;
+}
+
+.markdown-table th,
+.markdown-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    vertical-align: top;
+}
+
+.markdown-table th {
+    font-weight: 700;
+}
+
+.markdown-table td {
+    line-height: 1.5;
+}
+
+.markdown-table tr {
+    display: table-row;
+}
+
+.markdown-table th,
+.markdown-table td {
+    display: table-cell;
+}
+
   
     
