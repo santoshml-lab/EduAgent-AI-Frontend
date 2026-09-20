@@ -1149,19 +1149,108 @@ function formatAnswer(text) {
      * Simple tables
      */
 
-    formatted =
-        formatted.replace(
-            /\|(.+)\|/g,
-            match => {
+    /* =====================================================
+   MARKDOWN TABLES
+===================================================== */
 
-                const cells =
-                    match
-                        .split("|")
-                        .slice(1, -1)
-                        .map(
-                            cell =>
-                                cell.trim()
-                        );
+const lines =
+    formatted.split("\n");
+
+let tableHTML = "";
+let insideTable = false;
+
+const outputLines = [];
+
+for (let i = 0; i < lines.length; i++) {
+
+    const line = lines[i].trim();
+
+    if (
+        line.startsWith("|") &&
+        line.endsWith("|")
+    ) {
+
+        const cells =
+            line
+                .split("|")
+                .slice(1, -1)
+                .map(cell => cell.trim());
+
+        /*
+         * Ignore markdown separator row:
+         * |---|---|---|
+         */
+
+        const isSeparator =
+            cells.length > 0 &&
+            cells.every(cell =>
+                /^:?-+:?$/.test(cell)
+            );
+
+        if (isSeparator) {
+            continue;
+        }
+
+        if (!insideTable) {
+
+            insideTable = true;
+
+            tableHTML =
+                `<div class="markdown-table">`;
+        }
+
+        tableHTML += `
+            <div class="markdown-table-row">
+                ${cells
+                    .map(
+                        cell =>
+                            `<div class="markdown-table-cell">
+                                ${cell}
+                             </div>`
+                    )
+                    .join("")}
+            </div>
+        `;
+
+        /*
+         * Check whether next line
+         * is still a table.
+         */
+
+        const nextLine =
+            lines[i + 1]
+                ? lines[i + 1].trim()
+                : "";
+
+        if (
+            !(
+                nextLine.startsWith("|") &&
+                nextLine.endsWith("|")
+            )
+        ) {
+
+            tableHTML += "</div>";
+
+            outputLines.push(
+                tableHTML
+            );
+
+            tableHTML = "";
+
+            insideTable = false;
+        }
+
+    } else {
+
+        outputLines.push(line);
+    }
+}
+
+formatted =
+    outputLines.join("\n");
+        
+
+                
 
 
                 if (
