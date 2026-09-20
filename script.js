@@ -1030,10 +1030,6 @@ if (questionInput) {
 }
 
 
-/* =====================================================
-   NORMAL ANSWER FORMATTER
-===================================================== */
-
 function formatAnswer(text) {
 
     if (!text) {
@@ -1083,19 +1079,11 @@ function formatAnswer(text) {
 
     let i = 0;
 
-
     while (i < lines.length) {
 
         const line =
             lines[i].trim();
 
-
-        /*
-         * Detect Markdown table
-         *
-         * | Day | Topic | Activity |
-         * |-----|-------|----------|
-         */
 
         if (
             line.startsWith("|") &&
@@ -1125,63 +1113,21 @@ function formatAnswer(text) {
                 validSeparator
             ) {
 
-                /*
-                 * Responsive wrapper
-                 */
                 let tableHTML = `
-                    <div
-                        class="table-wrapper"
-                        style="
-                            width:100%;
-                            max-width:100%;
-                            overflow-x:auto;
-                            overflow-y:hidden;
-                            -webkit-overflow-scrolling:touch;
-                            margin:16px 0;
-                        "
-                    >
-
-                        <table
-                            class="markdown-table"
-                            style="
-                                width:100%;
-                                max-width:100%;
-                                table-layout:fixed;
-                                border-collapse:collapse;
-                            "
-                        >
-
-                            <colgroup>
-                                <col style="width:15%;">
-                                <col style="width:30%;">
-                                <col style="width:55%;">
-                            </colgroup>
-
+                    <div class="table-wrapper">
+                        <table class="markdown-table">
                             <thead>
                                 <tr>
                 `;
 
 
-                /* =================================================
-                   HEADER
-                ================================================= */
+                /* HEADER */
 
                 headerCells.forEach(
                     cell => {
 
                         tableHTML += `
-                            <th
-                                style="
-                                    padding:12px 10px;
-                                    text-align:left;
-                                    vertical-align:top;
-                                    white-space:normal;
-                                    overflow-wrap:anywhere;
-                                    word-break:break-word;
-                                "
-                            >
-                                ${cell}
-                            </th>
+                            <th>${cell}</th>
                         `;
                     }
                 );
@@ -1190,28 +1136,18 @@ function formatAnswer(text) {
                 tableHTML += `
                                 </tr>
                             </thead>
-
                             <tbody>
                 `;
 
 
-                /*
-                 * Skip:
-                 *
-                 * header
-                 * separator
-                 */
+                /* Skip header + separator */
 
                 i += 2;
 
 
-                /* =================================================
-                   TABLE BODY
-                ================================================= */
+                /* BODY */
 
-                while (
-                    i < lines.length
-                ) {
+                while (i < lines.length) {
 
                     const bodyLine =
                         lines[i].trim();
@@ -1250,18 +1186,7 @@ function formatAnswer(text) {
                         cell => {
 
                             tableHTML += `
-                                <td
-                                    style="
-                                        padding:12px 10px;
-                                        text-align:left;
-                                        vertical-align:top;
-                                        white-space:normal;
-                                        overflow-wrap:anywhere;
-                                        word-break:break-word;
-                                    "
-                                >
-                                    ${cell}
-                                </td>
+                                <td>${cell}</td>
                             `;
                         }
                     );
@@ -1278,9 +1203,7 @@ function formatAnswer(text) {
 
                 tableHTML += `
                             </tbody>
-
                         </table>
-
                     </div>
                 `;
 
@@ -1289,19 +1212,14 @@ function formatAnswer(text) {
                     tableHTML
                 );
 
-
                 continue;
             }
         }
 
 
-        /* =================================================
-           NORMAL LINE
-        ================================================= */
+        /* NORMAL LINE */
 
-        output.push(
-            line
-        );
+        output.push(line);
 
         i++;
     }
@@ -1373,6 +1291,18 @@ function formatAnswer(text) {
 
     return formatted;
 }
+
+    
+        
+                
+
+                        
+                
+                                    
+                    
+                
+        
+        
 
     
 
