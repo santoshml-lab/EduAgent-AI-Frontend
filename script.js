@@ -1042,7 +1042,6 @@ function formatAnswer(text) {
 
     let formatted = String(text);
 
-
     /* =================================================
        ESCAPE HTML
     ================================================= */
@@ -1071,6 +1070,195 @@ function formatAnswer(text) {
         /^# (.*)$/gm,
         "<h1>$1</h1>"
     );
+
+
+    /* =================================================
+       MARKDOWN TABLES
+    ================================================= */
+
+    const lines =
+        formatted.split("\n");
+
+    const output = [];
+
+    let i = 0;
+
+
+    while (i < lines.length) {
+
+        const line =
+            lines[i].trim();
+
+
+        /*
+         * Check whether this is a possible
+         * Markdown table header.
+         */
+
+        if (
+            line.startsWith("|") &&
+            line.endsWith("|") &&
+            i + 1 < lines.length
+        ) {
+
+            const headerCells =
+                parseTableRow(lines[i]);
+
+            const separatorCells =
+                parseTableRow(lines[i + 1]);
+
+
+            /*
+             * A valid Markdown table must have:
+             *
+             * | Header | Header |
+             * |--------|--------|
+             */
+
+            const validSeparator =
+                separatorCells.length > 0 &&
+                separatorCells.every(
+                    cell =>
+                        /^:?-{3,}:?$/.test(
+                            cell.trim()
+                        )
+                );
+
+
+            if (
+                headerCells.length > 0 &&
+                validSeparator
+            ) {
+
+                let tableHTML =
+                    `<div class="table-wrapper">
+                        <table class="markdown-table">
+                            <thead>
+                                <tr>`;
+
+
+                /*
+                 * Header
+                 */
+
+                headerCells.forEach(
+                    cell => {
+
+                        tableHTML += `
+                            <th>
+                                ${cell}
+                            </th>
+                        `;
+                    }
+                );
+
+
+                tableHTML += `
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+
+                /*
+                 * Skip header + separator
+                 */
+
+                i += 2;
+
+
+                /*
+                 * Table body
+                 */
+
+                while (
+                    i < lines.length
+                ) {
+
+                    const bodyLine =
+                        lines[i].trim();
+
+
+                    if (
+                        !bodyLine.startsWith("|") ||
+                        !bodyLine.endsWith("|")
+                    ) {
+
+                        break;
+                    }
+
+
+                    const cells =
+                        parseTableRow(
+                            bodyLine
+                        );
+
+
+                    if (
+                        cells.length === 0
+                    ) {
+                        i++;
+                        continue;
+                    }
+
+
+                    tableHTML += `
+                        <tr>
+                    `;
+
+
+                    cells.forEach(
+                        cell => {
+
+                            tableHTML += `
+                                <td>
+                                    ${cell}
+                                </td>
+                            `;
+                        }
+                    );
+
+
+                    tableHTML += `
+                        </tr>
+                    `;
+
+
+                    i++;
+                }
+
+
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+
+                output.push(
+                    tableHTML
+                );
+
+
+                continue;
+            }
+        }
+
+
+        /*
+         * Normal line
+         */
+
+        output.push(
+            line
+        );
+
+        i++;
+    }
+
+
+    formatted =
+        output.join("\n");
 
 
     /* =================================================
@@ -1124,158 +1312,6 @@ function formatAnswer(text) {
 
 
     /* =================================================
-       MARKDOWN TABLES
-    ================================================= */
-
-    const lines =
-        formatted.split("\n");
-
-    const outputLines = [];
-
-    let tableRows = [];
-
-
-    function flushTable() {
-
-        if (
-            tableRows.length === 0
-        ) {
-            return;
-        }
-
-
-        let html =
-            `<div class="markdown-table">`;
-
-
-        tableRows.forEach(
-            (cells, index) => {
-
-                const rowClass =
-                    index === 0
-                        ? "markdown-table-row markdown-table-header"
-                        : "markdown-table-row";
-
-
-                html += `
-                    <div class="${rowClass}">
-                        ${cells
-                            .map(
-                                cell => `
-                                    <div class="markdown-table-cell">
-                                        ${cell}
-                                    </div>
-                                `
-                            )
-                            .join("")}
-                    </div>
-                `;
-            }
-        );
-
-
-        html +=
-            "</div>";
-
-
-        outputLines.push(
-            html
-        );
-
-
-        tableRows = [];
-    }
-
-
-    for (
-        let i = 0;
-        i < lines.length;
-        i++
-    ) {
-
-        const line =
-            lines[i].trim();
-
-
-        /*
-         * Detect markdown table row
-         */
-
-        if (
-            line.startsWith("|") &&
-            line.endsWith("|")
-        ) {
-
-            const cells =
-                line
-                    .split("|")
-                    .slice(1, -1)
-                    .map(
-                        cell =>
-                            cell.trim()
-                    );
-
-
-            if (
-                cells.length === 0
-            ) {
-                continue;
-            }
-
-
-            /*
-             * Ignore separator row:
-             *
-             * |---|---|---|
-             */
-
-            const isSeparator =
-                cells.every(
-                    cell =>
-                        /^:?-+:?$/.test(
-                            cell
-                        )
-                );
-
-
-            if (isSeparator) {
-                continue;
-            }
-
-
-            tableRows.push(
-                cells
-            );
-
-        } else {
-
-            /*
-             * Normal text means
-             * table has ended.
-             */
-
-            flushTable();
-
-            outputLines.push(
-                line
-            );
-        }
-    }
-
-
-    /*
-     * Flush table if it ends
-     * at the last line.
-     */
-
-    flushTable();
-
-
-    formatted =
-        outputLines.join("\n");
-
-
-    /* =================================================
        LINE BREAKS
     ================================================= */
 
@@ -1287,6 +1323,123 @@ function formatAnswer(text) {
 
     return formatted;
 }
+
+
+/* =====================================================
+   MARKDOWN TABLE ROW PARSER
+===================================================== */
+
+function parseTableRow(line) {
+
+    if (!line) {
+        return [];
+    }
+
+
+    /*
+     * Remove first and last |
+     */
+
+    let content =
+        line.trim();
+
+
+    if (
+        content.startsWith("|")
+    ) {
+        content =
+            content.substring(1);
+    }
+
+
+    if (
+        content.endsWith("|")
+    ) {
+        content =
+            content.substring(
+                0,
+                content.length - 1
+            );
+    }
+
+
+    /*
+     * Split cells.
+     *
+     * Supports escaped pipes:
+     *
+     * \|
+     */
+
+    const cells = [];
+
+    let current = "";
+    let escaped = false;
+
+
+    for (
+        let i = 0;
+        i < content.length;
+        i++
+    ) {
+
+        const char =
+            content[i];
+
+
+        if (
+            char === "\\" &&
+            !escaped
+        ) {
+
+            escaped = true;
+            continue;
+        }
+
+
+        if (
+            char === "|" &&
+            !escaped
+        ) {
+
+            cells.push(
+                current.trim()
+            );
+
+            current = "";
+
+        } else {
+
+            current += char;
+        }
+
+
+        escaped = false;
+    }
+
+
+    cells.push(
+        current.trim()
+    );
+
+
+    return cells;
+}
+   
+
+
+    
+
+
+    
+                    
+            
+            
+
+
+            
+                        
+       
    
     
             
