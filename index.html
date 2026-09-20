@@ -2,207 +2,602 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduAgent AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="style.css">
+    <title>EduAgent AI | Intelligent Learning Agent</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <div class="app">
+<div class="app-shell">
 
-    <!-- Sidebar -->
+    <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar">
 
-      <div class="logo">
-        🤖 EduAgent <span>AI</span>
-      </div>
+        <div class="brand">
+            <div class="brand-icon">✦</div>
 
-      <div class="nav-item active">
-        💬 Chat
-      </div>
+            <div>
+                <div class="brand-name">EduAgent</div>
+                <div class="brand-subtitle">AI Learning Agent</div>
+            </div>
+        </div>
 
-      <div class="nav-item">
-        🔀 Agent Workflow
-      </div>
+        <div class="sidebar-label">
+            WORKSPACE
+        </div>
 
-      <div class="nav-item">
-        🔎 Search Sources
-      </div>
+        <nav class="sidebar-nav">
 
-      <div class="nav-item">
-        📝 Quiz Generator
-      </div>
+            <div class="nav-item active">
+                <span>◉</span>
+                <span>AI Assistant</span>
+            </div>
 
-      <div class="nav-item">
-        📅 Study Planner
-      </div>
+            <div class="nav-item">
+                <span>◇</span>
+                <span>Agent Workflow</span>
+            </div>
+
+            <div class="nav-item">
+                <span>⌕</span>
+                <span>Search Sources</span>
+            </div>
+
+            <div class="nav-item">
+                <span>▣</span>
+                <span>Quiz Generator</span>
+            </div>
+
+            <div class="nav-item">
+                <span>◫</span>
+                <span>Study Planner</span>
+            </div>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="agent-card">
+
+                <div class="agent-card-top">
+                    <span class="online-dot"></span>
+                    <span>Agent Online</span>
+                </div>
+
+                <p>
+                    Ready to reason, use tools
+                    and validate results.
+                </p>
+
+            </div>
+
+            <div class="architecture-mini">
+
+                <div class="mini-title">
+                    AGENT ENGINE
+                </div>
+
+                <div class="mini-flow">
+                    <span>Plan</span>
+                    <b>→</b>
+                    <span>Execute</span>
+                    <b>→</b>
+                    <span>Validate</span>
+                </div>
+
+            </div>
+
+        </div>
 
     </aside>
 
 
-    <!-- Main Content -->
-    <main class="main">
+    <!-- ================= MAIN ================= -->
+    <main class="main-content">
 
-      <!-- Topbar -->
-      <div class="topbar">
+        <!-- TOP BAR -->
+        <header class="topbar">
 
-        <div>
-          <h1>EduAgent AI</h1>
-          <p>Intelligent Education Assistant</p>
-        </div>
+            <div>
 
-        <div class="status">
-          🟢 Agent Online
-        </div>
+                <div class="eyebrow">
+                    INTELLIGENT EDUCATION SYSTEM
+                </div>
 
-      </div>
+                <h1>
+                    EduAgent AI
+                </h1>
 
+                <p>
+                    An agent that plans, uses tools, validates results
+                    and completes learning tasks.
+                </p>
 
-      <!-- Hero -->
-      <section class="hero">
-
-        <h2>
-          Your AI Education Agent 🧠
-        </h2>
-
-        <p>
-          Ask questions, solve problems, create quizzes,
-          build study plans and search current information.
-        </p>
-
-        <div class="input-area">
-
-          <input
-            type="text"
-            id="questionInput"
-            placeholder="Ask EduAgent anything..."
-          >
-
-          <button
-            id="askButton"
-            onclick="askAgent()"
-          >
-            Ask EduAgent
-          </button>
-
-        </div>
-
-      </section>
-
-
-      <!-- AI Response -->
-      <section
-        class="workflow"
-        id="responseSection"
-        style="display: none;"
-      >
-
-        <h3>🤖 EduAgent Response</h3>
-
-        <div id="answerBox"></div>
-
-      </section>
-
-
-      <!-- Agent Workflow -->
-      <section class="workflow">
-
-        <h3>⚡ Agent Workflow</h3>
-
-        <div class="nodes">
-
-          <div class="node" id="userNode">
-
-            <div class="node-title">
-              👤 User Query
             </div>
+
+            <div class="topbar-status">
+
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>System Online</strong>
+                    <small>Agent ready</small>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= HERO ================= -->
+        <section class="hero-section">
+
+            <div class="hero-badge">
+                <span>✦</span>
+                Autonomous Learning Agent
+            </div>
+
+            <h2>
+                Learn smarter.<br>
+                <span>Let the agent do the work.</span>
+            </h2>
+
+            <p class="hero-description">
+                Ask a question and EduAgent can decide what to do,
+                execute the right tools, validate their results,
+                recover from failures and deliver a final answer.
+            </p>
+
+
+            <!-- INPUT -->
+            <div class="ask-box">
+
+                <div class="input-wrapper">
+
+                    <span class="input-icon">⌕</span>
+
+                    <input
+                        type="text"
+                        id="questionInput"
+                        placeholder="Ask EduAgent anything..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+                <button
+                    id="askButton"
+                    onclick="askAgent()"
+                >
+                    <span>Ask Agent</span>
+                    <span class="button-arrow">→</span>
+                </button>
+
+            </div>
+
+
+            <!-- DEMO PROMPTS -->
+            <div class="demo-area">
+
+                <div class="demo-heading">
+                    <span>TRY A LIVE DEMO</span>
+                    <small>Recommended prompts</small>
+                </div>
+
+                <div class="demo-prompts">
+
+                    <button
+                        class="demo-prompt"
+                        onclick="useDemoPrompt('Calculate 125 × 48.')"
+                    >
+                        <span class="prompt-icon calculator-icon">
+                            ∑
+                        </span>
+
+                        <span>
+                            <strong>Calculator</strong>
+                            <small>Calculate 125 × 48</small>
+                        </span>
+
+                        <b>→</b>
+                    </button>
+
+
+                    <button
+                        class="demo-prompt"
+                        onclick="useDemoPrompt('What is the current latest Python version?')"
+                    >
+                        <span class="prompt-icon search-icon">
+                            ⌕
+                        </span>
+
+                        <span>
+                            <strong>Live Search</strong>
+                            <small>Latest Python version</small>
+                        </span>
+
+                        <b>→</b>
+                    </button>
+
+
+                    <button
+                        class="demo-prompt"
+                        onclick="useDemoPrompt('Give me a 5-question Physics quiz on Force.')"
+                    >
+                        <span class="prompt-icon quiz-icon">
+                            ?
+                        </span>
+
+                        <span>
+                            <strong>Quiz Generator</strong>
+                            <small>5-question Physics quiz</small>
+                        </span>
+
+                        <b>→</b>
+                    </button>
+
+
+                    <button
+                        class="demo-prompt"
+                        onclick="useDemoPrompt('My Physics scores are: Force 45%, Work Energy 55%, Light 90%. Find my weak topics and make a 7-day revision plan with 2 hours per day.')"
+                    >
+                        <span class="prompt-icon plan-icon">
+                            ◫
+                        </span>
+
+                        <span>
+                            <strong>Agentic Workflow</strong>
+                            <small>Weak topics → 7-day plan</small>
+                        </span>
+
+                        <b>→</b>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESPONSE ================= -->
+        <section
+            class="response-panel"
+            id="responseSection"
+            style="display: none;"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <div class="section-kicker">
+                        AGENT OUTPUT
+                    </div>
+
+                    <h3>
+                        Final Response
+                    </h3>
+
+                </div>
+
+                <div class="validated-badge">
+                    <span>✓</span>
+                    Validated
+                </div>
+
+            </div>
+
 
             <div
-              class="node-status"
-              id="userStatus"
-            >
-              Waiting
-            </div>
-
-          </div>
+                id="answerBox"
+                class="answer-box"
+            ></div>
 
 
-          <div class="arrow">
-            →
-          </div>
-
-
-          <div class="node" id="routerNode">
-
-            <div class="node-title">
-              🧠 Education Router
-            </div>
-
+            <!-- SOURCES -->
             <div
-              class="node-status"
-              id="routerStatus"
+                id="sourcesSection"
+                class="sources-section"
+                style="display:none;"
             >
-              Waiting
+
+                <div class="sources-title">
+                    <span>⌕</span>
+                    Sources
+                </div>
+
+                <div id="sourcesBox"></div>
+
             </div>
 
-          </div>
+        </section>
 
 
-          <div class="arrow">
-            →
-          </div>
+        <!-- ================= AGENT WORKFLOW ================= -->
+        <section class="workflow-section">
 
+            <div class="section-header">
 
-          <div class="node" id="toolNode">
+                <div>
 
-            <div class="node-title">
-              🔧 Tool
+                    <div class="section-kicker">
+                        UNDER THE HOOD
+                    </div>
+
+                    <h3>
+                        Agent Workflow
+                    </h3>
+
+                </div>
+
+                <div class="workflow-caption">
+                    Plan → Execute → Validate → Continue → Respond
+                </div>
+
             </div>
 
-            <div
-              class="node-status"
-              id="toolStatus"
-            >
-              Waiting
+
+            <div class="workflow-container">
+
+                <!-- STEP 1 -->
+                <div
+                    class="workflow-node"
+                    id="userNode"
+                >
+
+                    <div class="workflow-icon">
+                        <span>01</span>
+                    </div>
+
+                    <div class="workflow-content">
+
+                        <div class="workflow-title">
+                            User Query
+                        </div>
+
+                        <div
+                            class="node-status"
+                            id="userStatus"
+                        >
+                            Waiting
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="workflow-line"></div>
+
+
+                <!-- STEP 2 -->
+                <div
+                    class="workflow-node"
+                    id="routerNode"
+                >
+
+                    <div class="workflow-icon">
+                        <span>02</span>
+                    </div>
+
+                    <div class="workflow-content">
+
+                        <div class="workflow-title">
+                            Agent Planner
+                        </div>
+
+                        <div
+                            class="node-status"
+                            id="routerStatus"
+                        >
+                            Waiting
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="workflow-line"></div>
+
+
+                <!-- STEP 3 -->
+                <div
+                    class="workflow-node"
+                    id="toolNode"
+                >
+
+                    <div class="workflow-icon">
+                        <span>03</span>
+                    </div>
+
+                    <div class="workflow-content">
+
+                        <div class="workflow-title">
+                            Tool Execution
+                        </div>
+
+                        <div
+                            class="node-status"
+                            id="toolStatus"
+                        >
+                            Waiting
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="workflow-line"></div>
+
+
+                <!-- STEP 4 -->
+                <div
+                    class="workflow-node"
+                    id="validationNode"
+                >
+
+                    <div class="workflow-icon">
+                        <span>04</span>
+                    </div>
+
+                    <div class="workflow-content">
+
+                        <div class="workflow-title">
+                            Result Validation
+                        </div>
+
+                        <div
+                            class="node-status"
+                            id="validationStatus"
+                        >
+                            Waiting
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="workflow-line"></div>
+
+
+                <!-- STEP 5 -->
+                <div
+                    class="workflow-node"
+                    id="responseNode"
+                >
+
+                    <div class="workflow-icon">
+                        <span>05</span>
+                    </div>
+
+                    <div class="workflow-content">
+
+                        <div class="workflow-title">
+                            Final Response
+                        </div>
+
+                        <div
+                            class="node-status"
+                            id="responseStatus"
+                        >
+                            Waiting
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
-          </div>
 
+            <!-- AGENT PRINCIPLE -->
+            <div class="agent-principle">
 
-          <div class="arrow">
-            →
-          </div>
+                <div class="principle-icon">
+                    ✦
+                </div>
 
+                <div>
 
-          <div class="node" id="responseNode">
+                    <strong>
+                        Agentic execution
+                    </strong>
 
-            <div class="node-title">
-              🤖 AI Response
+                    <p>
+                        The agent does not simply generate an answer.
+                        It plans the task, selects tools, validates results
+                        and continues execution when another step is required.
+                    </p>
+
+                </div>
+
             </div>
 
-            <div
-              class="node-status"
-              id="responseStatus"
-            >
-              Waiting
+        </section>
+
+
+        <!-- ================= TOOL CAPABILITIES ================= -->
+        <section class="capabilities-section">
+
+            <div class="section-kicker">
+                CAPABILITIES
             </div>
 
-          </div>
+            <h3>
+                One agent. Multiple learning tools.
+            </h3>
 
-        </div>
+            <div class="capability-grid">
 
-      </section>
+                <div class="capability-card">
+                    <span>∑</span>
+                    <strong>Calculator</strong>
+                    <small>Reliable numerical reasoning</small>
+                </div>
+
+                <div class="capability-card">
+                    <span>⌕</span>
+                    <strong>Web Search</strong>
+                    <small>Current information retrieval</small>
+                </div>
+
+                <div class="capability-card">
+                    <span>?</span>
+                    <strong>Quiz Generator</strong>
+                    <small>Interactive learning practice</small>
+                </div>
+
+                <div class="capability-card">
+                    <span>◫</span>
+                    <strong>Study Planner</strong>
+                    <small>Personalized revision planning</small>
+                </div>
+
+                <div class="capability-card">
+                    <span>◇</span>
+                    <strong>Weak Topic Detector</strong>
+                    <small>Finds learning gaps from scores</small>
+                </div>
+
+                <div class="capability-card">
+                    <span>✓</span>
+                    <strong>Result Validator</strong>
+                    <small>Checks tool output before response</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= FOOTER ================= -->
+        <footer class="footer">
+
+            <div>
+                <strong>EduAgent AI</strong>
+                <span>Autonomous AI-powered education system</span>
+            </div>
+
+            <div class="footer-tech">
+                FastAPI · Groq · Python · JavaScript
+            </div>
+
+        </footer>
 
     </main>
 
-  </div>
+</div>
 
 
-  <!-- External JavaScript -->
-  <script src="script.js"></script>
+<script src="script.js"></script>
 
 </body>
 
