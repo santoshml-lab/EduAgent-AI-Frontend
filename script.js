@@ -1040,255 +1040,269 @@ function formatAnswer(text) {
         return "";
     }
 
-
-    let formatted =
-        String(text);
+    let formatted = String(text);
 
 
-    /*
-     * Escape HTML
-     */
+    /* =================================================
+       ESCAPE HTML
+    ================================================= */
 
-    formatted =
-        formatted
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            );
+    formatted = formatted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
 
-    /*
-     * Headings
-     */
+    /* =================================================
+       HEADINGS
+    ================================================= */
 
-    formatted =
-        formatted.replace(
-            /^### (.*)$/gm,
-            "<h3>$1</h3>"
-        );
+    formatted = formatted.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
 
+    formatted = formatted.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
 
-    formatted =
-        formatted.replace(
-            /^## (.*)$/gm,
-            "<h2>$1</h2>"
-        );
-
-
-    formatted =
-        formatted.replace(
-            /^# (.*)$/gm,
-            "<h1>$1</h1>"
-        );
+    formatted = formatted.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
 
 
-    /*
-     * Bold
-     */
+    /* =================================================
+       BOLD
+    ================================================= */
 
-    formatted =
-        formatted.replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-
-    /*
-     * Italic
-     */
-
-    formatted =
-        formatted.replace(
-            /\*(.*?)\*/g,
-            "<em>$1</em>"
-        );
+    formatted = formatted.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
 
 
-    /*
-     * Markdown links
-     */
+    /* =================================================
+       ITALIC
+    ================================================= */
 
-    formatted =
-        formatted.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-
-
-    /*
-     * Numbered lists
-     */
-
-    formatted =
-        formatted.replace(
-            /(?:^|\n)(\d+)\.\s+(.*)/g,
-            '<div class="numbered-item"><span>$1.</span> $2</div>'
-        );
+    formatted = formatted.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
 
 
-    /*
-     * Bullet lists
-     */
+    /* =================================================
+       MARKDOWN LINKS
+    ================================================= */
 
-    formatted =
-        formatted.replace(
-            /(?:^|\n)[-*]\s+(.*)/g,
-            '<div class="bullet-item">• $1</div>'
-        );
+    formatted = formatted.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
 
 
-    /*
-     * Simple tables
-     */
+    /* =================================================
+       NUMBERED LISTS
+    ================================================= */
 
-    /* =====================================================
-   MARKDOWN TABLES
-===================================================== */
+    formatted = formatted.replace(
+        /(?:^|\n)(\d+)\.\s+(.*)/g,
+        '<div class="numbered-item"><span>$1.</span> $2</div>'
+    );
 
-const lines =
-    formatted.split("\n");
 
-let tableHTML = "";
-let insideTable = false;
+    /* =================================================
+       BULLET LISTS
+    ================================================= */
 
-const outputLines = [];
+    formatted = formatted.replace(
+        /(?:^|\n)[-*]\s+(.*)/g,
+        '<div class="bullet-item">• $1</div>'
+    );
 
-for (let i = 0; i < lines.length; i++) {
 
-    const line = lines[i].trim();
+    /* =================================================
+       MARKDOWN TABLES
+    ================================================= */
 
-    if (
-        line.startsWith("|") &&
-        line.endsWith("|")
-    ) {
+    const lines =
+        formatted.split("\n");
 
-        const cells =
-            line
-                .split("|")
-                .slice(1, -1)
-                .map(cell => cell.trim());
+    const outputLines = [];
 
-        /*
-         * Ignore markdown separator row:
-         * |---|---|---|
-         */
+    let tableRows = [];
 
-        const isSeparator =
-            cells.length > 0 &&
-            cells.every(cell =>
-                /^:?-+:?$/.test(cell)
-            );
 
-        if (isSeparator) {
-            continue;
-        }
-
-        if (!insideTable) {
-
-            insideTable = true;
-
-            tableHTML =
-                `<div class="markdown-table">`;
-        }
-
-        tableHTML += `
-            <div class="markdown-table-row">
-                ${cells
-                    .map(
-                        cell =>
-                            `<div class="markdown-table-cell">
-                                ${cell}
-                             </div>`
-                    )
-                    .join("")}
-            </div>
-        `;
-
-        /*
-         * Check whether next line
-         * is still a table.
-         */
-
-        const nextLine =
-            lines[i + 1]
-                ? lines[i + 1].trim()
-                : "";
+    function flushTable() {
 
         if (
-            !(
-                nextLine.startsWith("|") &&
-                nextLine.endsWith("|")
-            )
+            tableRows.length === 0
         ) {
-
-            tableHTML += "</div>";
-
-            outputLines.push(
-                tableHTML
-            );
-
-            tableHTML = "";
-
-            insideTable = false;
+            return;
         }
 
-    } else {
 
-        outputLines.push(line);
-    }
-}
-
-formatted =
-    outputLines.join("\n");
-        
-
-                
+        let html =
+            `<div class="markdown-table">`;
 
 
-                if (
-                    cells.length === 0
-                ) {
-                    return match;
-                }
+        tableRows.forEach(
+            (cells, index) => {
+
+                const rowClass =
+                    index === 0
+                        ? "markdown-table-row markdown-table-header"
+                        : "markdown-table-row";
 
 
-                return `
-                    <div class="table-row">
-
+                html += `
+                    <div class="${rowClass}">
                         ${cells
                             .map(
-                                cell =>
-                                    `<div>${cell}</div>`
+                                cell => `
+                                    <div class="markdown-table-cell">
+                                        ${cell}
+                                    </div>
+                                `
                             )
                             .join("")}
-
                     </div>
                 `;
             }
         );
 
 
+        html +=
+            "</div>";
+
+
+        outputLines.push(
+            html
+        );
+
+
+        tableRows = [];
+    }
+
+
+    for (
+        let i = 0;
+        i < lines.length;
+        i++
+    ) {
+
+        const line =
+            lines[i].trim();
+
+
+        /*
+         * Detect markdown table row
+         */
+
+        if (
+            line.startsWith("|") &&
+            line.endsWith("|")
+        ) {
+
+            const cells =
+                line
+                    .split("|")
+                    .slice(1, -1)
+                    .map(
+                        cell =>
+                            cell.trim()
+                    );
+
+
+            if (
+                cells.length === 0
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Ignore separator row:
+             *
+             * |---|---|---|
+             */
+
+            const isSeparator =
+                cells.every(
+                    cell =>
+                        /^:?-+:?$/.test(
+                            cell
+                        )
+                );
+
+
+            if (isSeparator) {
+                continue;
+            }
+
+
+            tableRows.push(
+                cells
+            );
+
+        } else {
+
+            /*
+             * Normal text means
+             * table has ended.
+             */
+
+            flushTable();
+
+            outputLines.push(
+                line
+            );
+        }
+    }
+
+
     /*
-     * Line breaks
+     * Flush table if it ends
+     * at the last line.
      */
 
+    flushTable();
+
+
     formatted =
-        formatted.replace(
-            /\n/g,
-            "<br>"
-        );
+        outputLines.join("\n");
+
+
+    /* =================================================
+       LINE BREAKS
+    ================================================= */
+
+    formatted = formatted.replace(
+        /\n/g,
+        "<br>"
+    );
 
 
     return formatted;
 }
+   
+    
+            
+            
+     
+     
+     
+   
+                
+
+        
+
+        
+
+
+    
 
 
 /* =====================================================
