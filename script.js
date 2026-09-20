@@ -1,402 +1,1014 @@
 const BACKEND_URL =
-  "https://eduagent-ai-osvz.onrender.com/ask";
+    "https://eduagent-ai-osvz.onrender.com/ask";
 
-const SESSION_KEY = "eduagent_session_id";
+const SESSION_KEY =
+    "eduagent_session_id";
+
+
+/* =====================================================
+   SESSION
+===================================================== */
 
 function getSessionId() {
-    let sessionId = localStorage.getItem(SESSION_KEY);
+
+    let sessionId =
+        localStorage.getItem(SESSION_KEY);
 
     if (!sessionId) {
+
         sessionId =
-            (crypto.randomUUID)
+            crypto.randomUUID
                 ? crypto.randomUUID()
                 : `${Date.now()}-${Math.random()
                     .toString(36)
                     .substring(2)}`;
 
-        localStorage.setItem(SESSION_KEY, sessionId);
+        localStorage.setItem(
+            SESSION_KEY,
+            sessionId
+        );
     }
 
     return sessionId;
 }
 
 
-/* =========================
-   DOM ELEMENTS
-========================= */
-
-const chatForm = null;
+/* =====================================================
+   DOM
+===================================================== */
 
 const questionInput =
-    document.getElementById("questionInput");
+    document.getElementById(
+        "questionInput"
+    );
 
 const answerBox =
-    document.getElementById("answerBox");
+    document.getElementById(
+        "answerBox"
+    );
 
 const responseSection =
-    document.getElementById("responseSection");
+    document.getElementById(
+        "responseSection"
+    );
 
-const toolChain =
-    document.getElementById("tool-chain");
+const sourcesSection =
+    document.getElementById(
+        "sourcesSection"
+    );
 
-const sourcePanel =
-    document.getElementById("source-panel");
+const sourcesBox =
+    document.getElementById(
+        "sourcesBox"
+    );
 
-const workflowNodes =
-    document.querySelectorAll(".node");
+const askButton =
+    document.getElementById(
+        "askButton"
+    );
 
 
-/* =========================
-   WORKFLOW
-========================= */
+const workflow = {
+
+    user: {
+        node:
+            document.getElementById(
+                "userNode"
+            ),
+        status:
+            document.getElementById(
+                "userStatus"
+            )
+    },
+
+    planner: {
+        node:
+            document.getElementById(
+                "routerNode"
+            ),
+        status:
+            document.getElementById(
+                "routerStatus"
+            )
+    },
+
+    tool: {
+        node:
+            document.getElementById(
+                "toolNode"
+            ),
+        status:
+            document.getElementById(
+                "toolStatus"
+            )
+    },
+
+    validation: {
+        node:
+            document.getElementById(
+                "validationNode"
+            ),
+        status:
+            document.getElementById(
+                "validationStatus"
+            )
+    },
+
+    response: {
+        node:
+            document.getElementById(
+                "responseNode"
+            ),
+        status:
+            document.getElementById(
+                "responseStatus"
+            )
+    }
+};
+
+
+/* =====================================================
+   DEMO PROMPT
+===================================================== */
+
+function useDemoPrompt(question) {
+
+    if (!questionInput) {
+        return;
+    }
+
+    questionInput.value =
+        question;
+
+    questionInput.focus();
+
+    /*
+     * Small delay makes the demo feel
+     * natural while recording.
+     */
+    setTimeout(() => {
+
+        askAgent(question);
+
+    }, 150);
+}
+
+
+/* =====================================================
+   WORKFLOW HELPERS
+===================================================== */
 
 function resetWorkflow() {
 
-    const statuses = {
-        userStatus: "Waiting",
-        routerStatus: "Waiting",
-        toolStatus: "Waiting",
-        responseStatus: "Waiting"
+    Object.values(workflow)
+        .forEach(item => {
+
+            if (!item.node) {
+                return;
+            }
+
+            item.node.classList.remove(
+                "active",
+                "success",
+                "error"
+            );
+
+            if (item.status) {
+                item.status.textContent =
+                    "Waiting";
+            }
+        });
+}
+
+
+function setWorkflowState(
+    key,
+    state,
+    text
+) {
+
+    const item =
+        workflow[key];
+
+    if (!item || !item.node) {
+        return;
+    }
+
+    item.node.classList.remove(
+        "active",
+        "success",
+        "error"
+    );
+
+    item.node.classList.add(
+        state
+    );
+
+    if (item.status) {
+        item.status.textContent =
+            text;
+    }
+}
+
+
+function activateWorkflowStep(
+    key,
+    text = "Processing..."
+) {
+
+    setWorkflowState(
+        key,
+        "active",
+        text
+    );
+}
+
+
+function completeWorkflowStep(
+    key,
+    text = "Completed"
+) {
+
+    setWorkflowState(
+        key,
+        "success",
+        text
+    );
+}
+
+
+function errorWorkflowStep(
+    key,
+    text = "Failed"
+) {
+
+    setWorkflowState(
+        key,
+        "error",
+        text
+    );
+}
+
+
+/* =====================================================
+   TOOL NAME
+===================================================== */
+
+function getToolDisplayName(tool) {
+
+    const names = {
+
+        calculator:
+            "Calculator",
+
+        calculator_retry:
+            "Calculator Recovery",
+
+        web_search:
+            "Web Search",
+
+        web_search_retry:
+            "Web Search Recovery",
+
+        quiz_generator:
+            "Quiz Generator",
+
+        study_plan_generator:
+            "Study Plan Generator",
+
+        study_plan_retry:
+            "Study Plan Recovery",
+
+        weak_topic_detector:
+            "Weak Topic Detector",
+
+        quiz_result_analyzer:
+            "Quiz Result Analyzer",
+
+        education_router:
+            "Education Router",
+
+        agent_planner:
+            "Agent Planner",
+
+        agent_validator:
+            "Result Validator",
+
+        agent_validator_retry:
+            "Validation Retry",
+
+        result_validator:
+            "Result Validator",
+
+        result_validator_retry:
+            "Validation Retry",
+
+        final_response:
+            "Final Response"
     };
 
-    Object.entries(statuses).forEach(
-        ([id, text]) => {
-
-            const element =
-                document.getElementById(id);
-
-            if (element) {
-                element.textContent = text;
-            }
-        }
+    return (
+        names[tool] ||
+        formatToolName(tool)
     );
 }
 
 
-function activateWorkflow(index) {
+function formatToolName(tool) {
 
-    const statusIds = [
-        "userStatus",
-        "routerStatus",
-        "toolStatus",
-        "responseStatus"
-    ];
+    if (!tool) {
+        return "Unknown Tool";
+    }
 
-    statusIds.forEach(
-        (id, i) => {
+    return String(tool)
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, char =>
+            char.toUpperCase()
+        );
+}
 
-            const element =
-                document.getElementById(id);
 
-            if (!element) return;
+/* =====================================================
+   TOOL ICON
+===================================================== */
 
-            if (i < index) {
-                element.textContent = "Completed";
-            }
+function getToolIcon(tool) {
 
-            else if (i === index) {
-                element.textContent = "Processing...";
-            }
+    if (
+        tool.includes("calculator")
+    ) {
+        return "∑";
+    }
 
-            else {
-                element.textContent = "Waiting";
-            }
-        }
+    if (
+        tool.includes("web_search")
+    ) {
+        return "⌕";
+    }
+
+    if (
+        tool.includes("quiz")
+    ) {
+        return "?";
+    }
+
+    if (
+        tool.includes("study_plan")
+    ) {
+        return "◫";
+    }
+
+    if (
+        tool.includes("weak_topic")
+    ) {
+        return "◇";
+    }
+
+    if (
+        tool.includes("validator")
+    ) {
+        return "✓";
+    }
+
+    if (
+        tool.includes("planner")
+    ) {
+        return "01";
+    }
+
+    return "✦";
+}
+
+
+/* =====================================================
+   TRACE SUMMARY
+===================================================== */
+
+function getTraceTools(trace) {
+
+    if (!Array.isArray(trace)) {
+        return [];
+    }
+
+    return trace.filter(item => {
+
+        const tool =
+            item?.tool || "";
+
+        return (
+            tool !== "education_router" &&
+            tool !== "final_response"
+        );
+    });
+}
+
+
+/* =====================================================
+   TRACE → WORKFLOW
+===================================================== */
+
+async function animateAgentWorkflow(
+    trace
+) {
+
+    const tools =
+        getTraceTools(trace);
+
+
+    /*
+     * STEP 1
+     * User query
+     */
+
+    activateWorkflowStep(
+        "user",
+        "Received"
     );
-}
+
+    await sleep(350);
+
+    completeWorkflowStep(
+        "user",
+        "Received"
+    );
 
 
-function completeWorkflow() {
+    /*
+     * STEP 2
+     * Planner
+     */
 
-    const statusIds = [
-        "userStatus",
-        "routerStatus",
-        "toolStatus",
-        "responseStatus"
-    ];
+    activateWorkflowStep(
+        "planner",
+        "Planning..."
+    );
 
-    statusIds.forEach(id => {
+    await sleep(550);
 
-        const element =
-            document.getElementById(id);
+    const planner =
+        trace.find(
+            item =>
+                item?.tool ===
+                "agent_planner"
+        );
 
-        if (element) {
-            element.textContent = "Completed";
-        }
-    });
-}
+    if (planner) {
 
+        completeWorkflowStep(
+            "planner",
+            "Plan ready"
+        );
 
+    } else {
 
-
-
-/* =========================
-   TOOL CHAIN
-========================= */
-
-function showToolChain(tools) {
-
-    if (!toolChain) return;
-
-    toolChain.innerHTML = "";
-
-    if (!tools || tools.length === 0) {
-        toolChain.innerHTML = `
-            <div class="tool-empty">
-                No tools used
-            </div>
-        `;
-        return;
+        completeWorkflowStep(
+            "planner",
+            "Direct route"
+        );
     }
 
-    tools.forEach(item => {
 
-        const tool = item.tool || "unknown";
+    /*
+     * STEP 3
+     * Actual tool execution
+     */
 
-        let displayName = tool;
+    activateWorkflowStep(
+        "tool",
+        "Executing..."
+    );
 
-        if (tool === "calculator") {
-            displayName = "Calculator";
+
+    if (tools.length === 0) {
+
+        await sleep(400);
+
+    } else {
+
+        /*
+         * Show each actual tool
+         * in the status text.
+         */
+        for (
+            const item of tools
+        ) {
+
+            const tool =
+                item?.tool || "";
+
+            /*
+             * Validator steps are shown
+             * separately in step 4.
+             */
+            if (
+                tool.includes(
+                    "validator"
+                )
+            ) {
+                continue;
+            }
+
+            const displayName =
+                getToolDisplayName(
+                    tool
+                );
+
+            activateWorkflowStep(
+                "tool",
+                displayName
+            );
+
+            await sleep(500);
         }
-
-        else if (tool === "web_search") {
-            displayName = "Web Search";
-        }
-
-        else if (tool === "quiz_generator") {
-            displayName = "Quiz Generator";
-        }
-
-        else if (tool === "study_plan_generator") {
-            displayName = "Study Plan Generator";
-        }
-
-        else if (tool === "weak_topic_detector") {
-            displayName = "Weak Topic Detector";
-        }
-
-        else if (tool === "quiz_result_analyzer") {
-            displayName = "Quiz Result Analyzer";
-        }
-
-        const toolItem = document.createElement("div");
-
-        toolItem.className = "tool-item";
-
-        toolItem.innerHTML = `
-            <span class="tool-icon">⚙️</span>
-            <span>${displayName}</span>
-        `;
-
-        toolChain.appendChild(toolItem);
-    });
-}
-
-
-/* =========================
-   SOURCES
-========================= */
-
-function showSources(sources) {
-
-    if (!sourcePanel) return;
-
-    sourcePanel.innerHTML = "";
-
-    if (!sources || sources.length === 0) {
-        sourcePanel.innerHTML = `
-            <div class="source-empty">
-                No external sources used.
-            </div>
-        `;
-        return;
     }
 
-    const title = document.createElement("h3");
 
-    title.textContent = "Sources";
-
-    sourcePanel.appendChild(title);
-
-    sources.forEach(source => {
-
-        const sourceItem = document.createElement("div");
-
-        sourceItem.className = "source-item";
-
-        sourceItem.innerHTML = `
-            <a
-                href="${source.url || "#"}"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                ${source.title || "Source"}
-            </a>
-
-            <p>
-                ${source.content || ""}
-            </p>
-        `;
-
-        sourcePanel.appendChild(sourceItem);
-    });
-}
+    completeWorkflowStep(
+        "tool",
+        tools.length
+            ? `${tools.length} step(s) executed`
+            : "No tool required"
+    );
 
 
-/* =========================
-   ASK AGENT
-========================= */
+    /*
+     * STEP 4
+     * Validation
+     */
 
-async function askAgent(question) {
+    activateWorkflowStep(
+        "validation",
+        "Checking result..."
+    );
 
-    question =
-        question ||
-        questionInput.value.trim();
+    await sleep(500);
 
-    if (!question) return;
 
-    if (responseSection) {
-        responseSection.style.display = "block";
-    }
+    const validationItems =
+        trace.filter(item => {
 
-    resetWorkflow();
+            const tool =
+                item?.tool || "";
 
-    
-
-    activateWorkflow(0);
-
-    answerBox.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            <p>Agent is thinking...</p>
-        </div>
-    `;
-
-    if (sourcePanel) {
-        sourcePanel.innerHTML = "";
-    }
-
-    try {
-
-        activateWorkflow(1);
-
-        const response = await fetch(BACKEND_URL, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                question: question,
-                session_id: getSessionId()
-            })
+            return (
+                tool.includes(
+                    "validator"
+                )
+            );
         });
 
 
+    const rejected =
+        validationItems.filter(
+            item =>
+                item?.status ===
+                "rejected"
+        );
+
+
+    const retryItems =
+        trace.filter(item => {
+
+            const tool =
+                item?.tool || "";
+
+            return (
+                tool.includes(
+                    "retry"
+                )
+            );
+        });
+
+
+    if (
+        rejected.length > 0 &&
+        retryItems.length > 0
+    ) {
+
+        activateWorkflowStep(
+            "validation",
+            "Recovery required..."
+        );
+
+        await sleep(500);
+
+        activateWorkflowStep(
+            "validation",
+            "Retry validated..."
+        );
+
+        await sleep(550);
+
+        completeWorkflowStep(
+            "validation",
+            "Recovered ✓"
+        );
+
+    } else {
+
+        completeWorkflowStep(
+            "validation",
+            "Validated ✓"
+        );
+    }
+
+
+    /*
+     * STEP 5
+     * Final response
+     */
+
+    activateWorkflowStep(
+        "response",
+        "Generating..."
+    );
+
+    await sleep(500);
+
+    completeWorkflowStep(
+        "response",
+        "Completed ✓"
+    );
+}
+
+
+/* =====================================================
+   SLEEP
+===================================================== */
+
+function sleep(ms) {
+
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+}
+
+
+/* =====================================================
+   TOOL TRACE PANEL
+===================================================== */
+
+function showToolChain(trace) {
+
+    /*
+     * Old tool-chain panel is removed
+     * from the new HTML.
+     *
+     * We now use the Agent Workflow
+     * section instead.
+     */
+
+    if (!Array.isArray(trace)) {
+        return;
+    }
+
+    console.log(
+        "Agent tool trace:",
+        trace
+    );
+}
+
+
+/* =====================================================
+   SOURCES
+===================================================== */
+
+function showSources(
+    sources
+) {
+
+    if (
+        !sourcesSection ||
+        !sourcesBox
+    ) {
+        return;
+    }
+
+
+    sourcesBox.innerHTML =
+        "";
+
+
+    if (
+        !Array.isArray(sources) ||
+        sources.length === 0
+    ) {
+
+        sourcesSection.style.display =
+            "none";
+
+        return;
+    }
+
+
+    sourcesSection.style.display =
+        "block";
+
+
+    sources.forEach(
+        source => {
+
+            const item =
+                document.createElement(
+                    "a"
+                );
+
+            item.href =
+                source.url || "#";
+
+            item.target =
+                "_blank";
+
+            item.rel =
+                "noopener noreferrer";
+
+            item.textContent =
+                source.title ||
+                "Source";
+
+
+            sourcesBox.appendChild(
+                item
+            );
+        }
+    );
+}
+
+
+/* =====================================================
+   ASK AGENT
+===================================================== */
+
+async function askAgent(
+    question = ""
+) {
+
+    question =
+        question ||
+        (
+            questionInput
+                ? questionInput.value.trim()
+                : ""
+        );
+
+
+    if (!question) {
+        return;
+    }
+
+
+    if (responseSection) {
+
+        responseSection.style.display =
+            "block";
+    }
+
+
+    resetWorkflow();
+
+
+    /*
+     * Disable button during request.
+     */
+
+    if (askButton) {
+
+        askButton.disabled =
+            true;
+
+        askButton.innerHTML =
+            `
+            <span>Thinking...</span>
+            <span>✦</span>
+            `;
+    }
+
+
+    /*
+     * Initial answer state.
+     */
+
+    if (answerBox) {
+
+        answerBox.innerHTML = `
+            <div class="loading">
+
+                <div class="spinner"></div>
+
+                <p>
+                    EduAgent is planning
+                    your request...
+                </p>
+
+            </div>
+        `;
+    }
+
+
+    try {
+
+        /*
+         * User received
+         */
+        activateWorkflowStep(
+            "user",
+            "Received"
+        );
+
+
+        await sleep(250);
+
+
+        /*
+         * Planner
+         */
+        activateWorkflowStep(
+            "planner",
+            "Planning..."
+        );
+
+
+        const response =
+            await fetch(
+                BACKEND_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        question:
+                            question,
+
+                        session_id:
+                            getSessionId()
+                    })
+                }
+            );
+
+
         if (!response.ok) {
+
             throw new Error(
                 `Backend error: ${response.status}`
             );
         }
 
 
-        activateWorkflow(2);
-
-
-        const data = await response.json();
-
-
-        activateWorkflow(3);
-
-
         /*
-         * Remove router/final-response
-         * from visible tool chain.
+         * Backend response
          */
-        const actualTools =
-            Array.isArray(data.tool_trace)
-                ? data.tool_trace.filter(
-                    item =>
-                        item.tool !== "education_router" &&
-                        item.tool !== "final_response"
-                )
+
+        const data =
+            await response.json();
+
+
+        const trace =
+            Array.isArray(
+                data.tool_trace
+            )
+                ? data.tool_trace
                 : [];
 
 
-        showToolChain(actualTools);
+        /*
+         * Stop current workflow
+         * state before replaying actual trace.
+         */
 
-        showSources(data.sources || []);
+        resetWorkflow();
 
 
         /*
-         * Quiz JSON gets rendered as
-         * interactive quiz.
-         *
-         * Normal answers continue to
-         * use formatAnswer().
+         * Replay actual agentic
+         * workflow.
          */
-        answerBox.innerHTML = `
-            <div class="answer-content">
-                ${renderQuiz(data.answer) || formatAnswer(data.answer)}
-            </div>
-        `;
+
+        await animateAgentWorkflow(
+            trace
+        );
 
 
-        completeWorkflow();
+        /*
+         * Sources
+         */
+
+        showSources(
+            data.sources || []
+        );
+
+
+        /*
+         * Final answer
+         */
+
+        if (answerBox) {
+
+            const quizHTML =
+                renderQuiz(
+                    data.answer
+                );
+
+
+            answerBox.innerHTML = `
+                <div class="answer-content">
+
+                    ${
+                        quizHTML ||
+                        formatAnswer(
+                            data.answer
+                        )
+                    }
+
+                </div>
+            `;
+        }
+
+
+        /*
+         * Scroll response
+         * into view for demo.
+         */
+
+        if (responseSection) {
+
+            setTimeout(() => {
+
+                responseSection.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }, 100);
+        }
 
 
     } catch (error) {
 
-        console.error(error);
-
-        workflowNodes.forEach(node => {
-            node.classList.remove(
-                "active",
-                "completed"
-            );
-
-            node.classList.add("error");
-        });
+        console.error(
+            "EduAgent error:",
+            error
+        );
 
 
-        answerBox.innerHTML = `
-            <div class="error-message">
-                <strong>Something went wrong.</strong>
-                <p>${error.message}</p>
-            </div>
-        `;
+        errorWorkflowStep(
+            "response",
+            "Failed"
+        );
+
+
+        if (answerBox) {
+
+            answerBox.innerHTML = `
+                <div class="error-message">
+
+                    <strong>
+                        Something went wrong.
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(
+                            error.message
+                        )}
+                    </p>
+
+                </div>
+            `;
+        }
+
+    } finally {
+
+        /*
+         * Re-enable button.
+         */
+
+        if (askButton) {
+
+            askButton.disabled =
+                false;
+
+            askButton.innerHTML =
+                `
+                <span>Ask Agent</span>
+                <span class="button-arrow">→</span>
+                `;
+        }
     }
 }
 
 
-/* =========================
-   FORM SUBMIT
-========================= */
-
-if (chatForm) {
-
-    chatForm.addEventListener(
-        "submit",
-        async (event) => {
-
-            event.preventDefault();
-
-            const question =
-                questionInput.value.trim();
-
-            if (!question) return;
-
-            await askAgent(question);
-        }
-    );
-}
-
-
-/* =========================
+/* =====================================================
    ENTER KEY
-========================= */
+===================================================== */
 
 if (questionInput) {
 
@@ -411,18 +1023,16 @@ if (questionInput) {
 
                 event.preventDefault();
 
-                if (chatForm) {
-                    chatForm.requestSubmit();
-                }
+                askAgent();
             }
         }
     );
 }
 
 
-/* =========================
-   FORMAT NORMAL ANSWER
-========================= */
+/* =====================================================
+   NORMAL ANSWER FORMATTER
+===================================================== */
 
 function formatAnswer(text) {
 
@@ -430,107 +1040,162 @@ function formatAnswer(text) {
         return "";
     }
 
-    let formatted = String(text);
+
+    let formatted =
+        String(text);
 
 
-    /* Escape HTML first */
+    /*
+     * Escape HTML
+     */
 
-    formatted = formatted
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-
-    /* Markdown headings */
-
-    formatted = formatted.replace(
-        /^### (.*)$/gm,
-        "<h3>$1</h3>"
-    );
-
-    formatted = formatted.replace(
-        /^## (.*)$/gm,
-        "<h2>$1</h2>"
-    );
-
-    formatted = formatted.replace(
-        /^# (.*)$/gm,
-        "<h1>$1</h1>"
-    );
+    formatted =
+        formatted
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            );
 
 
-    /* Bold */
+    /*
+     * Headings
+     */
 
-    formatted = formatted.replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-    );
-
-
-    /* Italic */
-
-    formatted = formatted.replace(
-        /\*(.*?)\*/g,
-        "<em>$1</em>"
-    );
+    formatted =
+        formatted.replace(
+            /^### (.*)$/gm,
+            "<h3>$1</h3>"
+        );
 
 
-    /* Links */
-
-    formatted = formatted.replace(
-        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
-
-
-    /* Numbered lists */
-
-    formatted = formatted.replace(
-        /(?:^|\n)(\d+)\.\s+(.*)/g,
-        '<div class="numbered-item"><span>$1.</span> $2</div>'
-    );
+    formatted =
+        formatted.replace(
+            /^## (.*)$/gm,
+            "<h2>$1</h2>"
+        );
 
 
-    /* Bullet lists */
+    formatted =
+        formatted.replace(
+            /^# (.*)$/gm,
+            "<h1>$1</h1>"
+        );
 
-    formatted = formatted.replace(
-        /(?:^|\n)[-*]\s+(.*)/g,
-        '<div class="bullet-item">• $1</div>'
-    );
+
+    /*
+     * Bold
+     */
+
+    formatted =
+        formatted.replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        );
 
 
-    /* Tables */
+    /*
+     * Italic
+     */
 
-    formatted = formatted.replace(
-        /\|(.+)\|/g,
-        function(match) {
+    formatted =
+        formatted.replace(
+            /\*(.*?)\*/g,
+            "<em>$1</em>"
+        );
 
-            const cells = match
-                .split("|")
-                .slice(1, -1)
-                .map(cell => cell.trim());
 
-            if (cells.length === 0) {
-                return match;
+    /*
+     * Markdown links
+     */
+
+    formatted =
+        formatted.replace(
+            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+        );
+
+
+    /*
+     * Numbered lists
+     */
+
+    formatted =
+        formatted.replace(
+            /(?:^|\n)(\d+)\.\s+(.*)/g,
+            '<div class="numbered-item"><span>$1.</span> $2</div>'
+        );
+
+
+    /*
+     * Bullet lists
+     */
+
+    formatted =
+        formatted.replace(
+            /(?:^|\n)[-*]\s+(.*)/g,
+            '<div class="bullet-item">• $1</div>'
+        );
+
+
+    /*
+     * Simple tables
+     */
+
+    formatted =
+        formatted.replace(
+            /\|(.+)\|/g,
+            match => {
+
+                const cells =
+                    match
+                        .split("|")
+                        .slice(1, -1)
+                        .map(
+                            cell =>
+                                cell.trim()
+                        );
+
+
+                if (
+                    cells.length === 0
+                ) {
+                    return match;
+                }
+
+
+                return `
+                    <div class="table-row">
+
+                        ${cells
+                            .map(
+                                cell =>
+                                    `<div>${cell}</div>`
+                            )
+                            .join("")}
+
+                    </div>
+                `;
             }
-
-            return `
-                <div class="table-row">
-                    ${cells
-                        .map(cell => `<div>${cell}</div>`)
-                        .join("")}
-                </div>
-            `;
-        }
-    );
+        );
 
 
-    /* Line breaks */
+    /*
+     * Line breaks
+     */
 
-    formatted = formatted.replace(
-        /\n/g,
-        "<br>"
-    );
+    formatted =
+        formatted.replace(
+            /\n/g,
+            "<br>"
+        );
 
 
     return formatted;
@@ -541,7 +1206,9 @@ function formatAnswer(text) {
    INTERACTIVE QUIZ
 ===================================================== */
 
-function renderQuiz(answer) {
+function renderQuiz(
+    answer
+) {
 
     if (!answer) {
         return "";
@@ -551,10 +1218,6 @@ function renderQuiz(answer) {
     let quiz;
 
 
-    /*
-     * Backend currently returns quiz
-     * JSON as a string.
-     */
     try {
 
         quiz =
@@ -564,22 +1227,18 @@ function renderQuiz(answer) {
 
     } catch (error) {
 
-        /*
-         * Not quiz JSON.
-         */
         return "";
     }
 
 
-    /*
-     * Validate quiz structure.
-     */
-
     if (
         !quiz ||
-        !Array.isArray(quiz.questions) ||
+        !Array.isArray(
+            quiz.questions
+        ) ||
         quiz.questions.length === 0
     ) {
+
         return "";
     }
 
@@ -590,29 +1249,30 @@ function renderQuiz(answer) {
             .substring(2)}`;
 
 
-    /*
-     * Initialize after HTML has
-     * been inserted into DOM.
-     */
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        const quizElement =
-            document.getElementById(quizId);
-
-        if (!quizElement) return;
-
-        initializeQuiz(
-            quizElement,
-            quiz.questions,
-            quiz
-        );
-
-    }, 0);
+            const quizElement =
+                document.getElementById(
+                    quizId
+                );
 
 
-    /*
-     * Return initial quiz container.
-     */
+            if (!quizElement) {
+                return;
+            }
+
+
+            initializeQuiz(
+                quizElement,
+                quiz.questions,
+                quiz
+            );
+
+        },
+        0
+    );
+
 
     return `
         <div
@@ -642,38 +1302,43 @@ function initializeQuiz(
     let score = 0;
 
 
-    /*
-     * Load question.
-     */
-
     function loadQuestion() {
 
         const question =
-            questions[currentQuestion];
+            questions[
+                currentQuestion
+            ];
 
 
         if (!question) {
+
             showQuizResult();
+
             return;
         }
 
 
         quizElement.innerHTML = `
+
             <div class="quiz-header">
 
                 <div class="quiz-title">
+
                     ${escapeHTML(
                         quiz.topic ||
                         quiz.subject ||
                         "Interactive Quiz"
                     )}
+
                 </div>
 
                 <div class="quiz-progress">
+
                     Question
                     ${currentQuestion + 1}
                     of
                     ${questions.length}
+
                 </div>
 
             </div>
@@ -683,14 +1348,17 @@ function initializeQuiz(
 
                 <h3>
                     ${escapeHTML(
-                        question.question || ""
+                        question.question ||
+                        ""
                     )}
                 </h3>
 
 
                 <div class="quiz-options">
 
-                    ${createQuizOptions(question)}
+                    ${createQuizOptions(
+                        question
+                    )}
 
                 </div>
 
@@ -706,9 +1374,16 @@ function initializeQuiz(
                     id="quiz-next"
                     disabled
                 >
-                    ${currentQuestion === questions.length - 1
+
+                    ${
+                        currentQuestion ===
+                        questions.length - 1
+
                         ? "Finish Quiz"
-                        : "Next Question"}
+
+                        : "Next Question"
+                    }
+
                 </button>
 
             </div>
@@ -727,36 +1402,34 @@ function initializeQuiz(
             );
 
 
-        optionButtons.forEach(button => {
+        optionButtons.forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    /*
-                     * Prevent changing answer
-                     * after selection.
-                     */
-                    if (
-                        button.disabled
-                    ) {
-                        return;
+                        if (
+                            button.disabled
+                        ) {
+                            return;
+                        }
+
+
+                        const selected =
+                            button.dataset.option;
+
+
+                        handleAnswer(
+                            question,
+                            selected,
+                            optionButtons,
+                            nextButton
+                        );
                     }
-
-
-                    const selected =
-                        button.dataset.option;
-
-
-                    handleAnswer(
-                        question,
-                        selected,
-                        optionButtons,
-                        nextButton
-                    );
-                }
-            );
-        });
+                );
+            }
+        );
 
 
         nextButton.addEventListener(
@@ -764,6 +1437,7 @@ function initializeQuiz(
             () => {
 
                 currentQuestion++;
+
 
                 if (
                     currentQuestion >=
@@ -781,10 +1455,6 @@ function initializeQuiz(
     }
 
 
-    /*
-     * Handle selected answer.
-     */
-
     function handleAnswer(
         question,
         selected,
@@ -794,8 +1464,11 @@ function initializeQuiz(
 
         const correct =
             String(
-                question.correct_answer || ""
-            ).trim().toUpperCase();
+                question.correct_answer ||
+                ""
+            )
+                .trim()
+                .toUpperCase();
 
 
         const selectedValue =
@@ -810,34 +1483,40 @@ function initializeQuiz(
             );
 
 
-        optionButtons.forEach(button => {
+        optionButtons.forEach(
+            button => {
 
-            button.disabled = true;
-
-            const option =
-                button.dataset.option
-                    .trim()
-                    .toUpperCase();
+                button.disabled =
+                    true;
 
 
-            if (option === correct) {
+                const option =
+                    button.dataset.option
+                        .trim()
+                        .toUpperCase();
 
-                button.classList.add(
-                    "correct"
-                );
+
+                if (
+                    option === correct
+                ) {
+
+                    button.classList.add(
+                        "correct"
+                    );
+                }
+
+
+                if (
+                    option === selectedValue &&
+                    selectedValue !== correct
+                ) {
+
+                    button.classList.add(
+                        "wrong"
+                    );
+                }
             }
-
-
-            if (
-                option === selectedValue &&
-                selectedValue !== correct
-            ) {
-
-                button.classList.add(
-                    "wrong"
-                );
-            }
-        });
+        );
 
 
         if (
@@ -846,15 +1525,20 @@ function initializeQuiz(
 
             score++;
 
+
             feedback.innerHTML = `
+
                 <div class="quiz-correct">
+
                     ✓ Correct!
+
                     <p>
                         ${escapeHTML(
                             question.explanation ||
                             "Good job!"
                         )}
                     </p>
+
                 </div>
             `;
 
@@ -863,45 +1547,52 @@ function initializeQuiz(
             const correctText =
                 question.options &&
                 question.options[correct]
-                    ? question.options[correct]
+                    ? question.options[
+                        correct
+                    ]
                     : correct;
 
 
             feedback.innerHTML = `
+
                 <div class="quiz-wrong">
+
                     ✗ Not quite.
 
                     <p>
+
                         Correct answer:
                         <strong>
                             ${escapeHTML(
                                 correct
                             )}
                         </strong>
+
                         —
                         ${escapeHTML(
                             correctText
                         )}
+
                     </p>
 
                     <p>
+
                         ${escapeHTML(
                             question.explanation ||
                             ""
                         )}
+
                     </p>
+
                 </div>
             `;
         }
 
 
-        nextButton.disabled = false;
+        nextButton.disabled =
+            false;
     }
 
-
-    /*
-     * Final result.
-     */
 
     function showQuizResult() {
 
@@ -912,7 +1603,8 @@ function initializeQuiz(
         const percentage =
             total > 0
                 ? Math.round(
-                    (score / total) * 100
+                    (score / total) *
+                    100
                 )
                 : 0;
 
@@ -920,12 +1612,16 @@ function initializeQuiz(
         let message;
 
 
-        if (percentage >= 80) {
+        if (
+            percentage >= 80
+        ) {
 
             message =
                 "Excellent work!";
 
-        } else if (percentage >= 60) {
+        } else if (
+            percentage >= 60
+        ) {
 
             message =
                 "Good job! Keep practicing.";
@@ -938,6 +1634,7 @@ function initializeQuiz(
 
 
         quizElement.innerHTML = `
+
             <div class="quiz-result">
 
                 <div class="quiz-result-icon">
@@ -981,9 +1678,6 @@ function initializeQuiz(
             "click",
             () => {
 
-                /*
-                 * Reinitialize the same quiz.
-                 */
                 initializeQuiz(
                     quizElement,
                     questions,
@@ -994,24 +1688,23 @@ function initializeQuiz(
     }
 
 
-    /*
-     * Start first question.
-     */
-
     loadQuestion();
 }
 
 
 /* =====================================================
-   QUIZ OPTIONS HTML
+   QUIZ OPTIONS
 ===================================================== */
 
-function createQuizOptions(question) {
+function createQuizOptions(
+    question
+) {
 
     if (
         !question ||
         !question.options
     ) {
+
         return "";
     }
 
@@ -1023,27 +1716,35 @@ function createQuizOptions(question) {
 
 
     return optionEntries
-        .map(([key, value]) => {
+        .map(
+            ([key, value]) => {
 
-            return `
-                <button
-                    type="button"
-                    class="quiz-option"
-                    data-option="${escapeHTML(key)}"
-                >
+                return `
 
-                    <span class="quiz-option-key">
-                        ${escapeHTML(key)}
-                    </span>
+                    <button
+                        type="button"
+                        class="quiz-option"
+                        data-option="${escapeHTML(
+                            key
+                        )}"
+                    >
 
-                    <span class="quiz-option-text">
-                        ${escapeHTML(value)}
-                    </span>
+                        <span
+                            class="quiz-option-key"
+                        >
+                            ${escapeHTML(key)}
+                        </span>
 
-                </button>
-            `;
+                        <span
+                            class="quiz-option-text"
+                        >
+                            ${escapeHTML(value)}
+                        </span>
 
-        })
+                    </button>
+                `;
+            }
+        )
         .join("");
 }
 
@@ -1052,22 +1753,48 @@ function createQuizOptions(question) {
    HTML ESCAPE
 ===================================================== */
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
-    if (value === null ||
-        value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
 
         return "";
     }
 
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+/* =====================================================
+   INITIAL STATE
+===================================================== */
+
+resetWorkflow();
 
   
 
