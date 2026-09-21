@@ -1507,12 +1507,22 @@ function parsePlainTextQuiz(text) {
         }
 
 
-        const options = {
-            A: optionValues[0] || "",
-            B: optionValues[1] || "",
-            C: optionValues[2] || "",
-            D: optionValues[3] || ""
-        };
+        const cleanedOptions = optionValues.map(value =>
+    String(value || "")
+        .replace(
+            /\s*(?:\*\*)?\s*(?:Correct Answer|Answer)\s*:\s*[A-D]\s*\)\s*.*$/i,
+            ""
+        )
+        .trim()
+);
+
+const options = {
+    A: cleanedOptions[0] || "",
+    B: cleanedOptions[1] || "",
+    C: cleanedOptions[2] || "",
+    D: cleanedOptions[3] || ""
+};
+        
 
 
         if (
@@ -1979,10 +1989,14 @@ function initializeQuiz(
 
             <div
                 class="quiz-question"
-                style="
-                    height:auto !important;
-                    min-height:0 !important;
-                "
+            
+                    style="
+                      height:auto !important;
+                      min-height:0 !important;
+                     white-space:normal !important;
+                   "
+                    
+                
             >
 
                 <h3>
