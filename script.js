@@ -1208,20 +1208,10 @@ function formatAnswer(text) {
    LINE BREAKS
 ================================================= */
 
-formatted = formatted.trim();
-
-/*
- * Remove line breaks immediately before/after
- * block-level HTML elements such as tables.
- */
 formatted = formatted
-    .replace(/\n+(?=<div class="table-wrapper">)/g, "")
-    .replace(/(<\/div>)\n+/g, "$1");
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
 
-/*
- * Convert only remaining single newlines
- * into visual line breaks.
- */
 formatted = formatted.replace(/\n/g, "<br>");
 
 return formatted;
