@@ -2663,5 +2663,39 @@ footer a:hover {
     }
 }
 
+/* =====================================================
+   SIDEBAR - BRANDING POLISH
+===================================================== */
+
+.sidebar .logo {
+    transition:
+        transform 0.25s ease,
+        filter 0.25s ease;
+}
+
+.sidebar .logo:hover {
+    transform: translateX(2px);
+    filter: drop-shadow(
+        0 0 10px rgba(124, 58, 237, 0.28)
+    );
+}
+
+.sidebar .logo-icon {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.sidebar .logo:hover .logo-icon {
+    transform: scale(1.06);
+
+    box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.25);
+}
+
+.sidebar .logo-text {
+    letter-spacing: -0.3px;
+}
+
   
     
