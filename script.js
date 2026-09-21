@@ -1207,6 +1207,9 @@ function formatAnswer(text) {
     /* =================================================
        LINE BREAKS
     ================================================= */
+    formatted = formatted
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
 
     formatted = formatted.replace(
         /\n/g,
