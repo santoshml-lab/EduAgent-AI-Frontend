@@ -1968,5 +1968,139 @@ body {
     }
 }
 
+/* =====================================================
+   AGENT WORKFLOW - COMPETITION POLISH
+===================================================== */
+
+.workflow-container {
+    gap: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
+}
+
+.workflow-node {
+    min-width: 190px;
+    position: relative;
+    overflow: hidden;
+}
+
+.workflow-node::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            110deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.045) 50%,
+            transparent 80%
+        );
+
+    transform: translateX(-120%);
+    transition: transform 0.6s ease;
+
+    pointer-events: none;
+}
+
+.workflow-node.active::after {
+    transform: translateX(120%);
+}
+
+.workflow-node.active {
+    animation: workflowPulse 1.8s ease-in-out infinite;
+}
+
+.workflow-node.success {
+    box-shadow:
+        0 0 18px rgba(34, 197, 94, 0.06);
+}
+
+.workflow-node.active .node-status {
+    color: #c4b5fd;
+}
+
+.workflow-line {
+    width: 42px;
+    position: relative;
+    overflow: hidden;
+}
+
+.workflow-line::after {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -100%;
+
+    width: 100%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #a78bfa,
+            transparent
+        );
+
+    opacity: 0;
+}
+
+.workflow-node.active + .workflow-line::after {
+    opacity: 1;
+    animation: workflowFlow 0.9s linear infinite;
+}
+
+@keyframes workflowPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 rgba(124, 58, 237, 0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 24px rgba(124, 58, 237, 0.16);
+    }
+}
+
+@keyframes workflowFlow {
+    from {
+        left: -100%;
+    }
+
+    to {
+        left: 100%;
+    }
+}
+
+
+/* Tool names can be slightly longer than normal statuses */
+
+.workflow-node .node-status {
+    max-width: 145px;
+
+    line-height: 1.35;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* Mobile workflow */
+
+@media (max-width: 800px) {
+
+    .workflow-node {
+        min-width: 180px;
+    }
+
+    .workflow-line {
+        width: 24px;
+    }
+}
+
   
     
