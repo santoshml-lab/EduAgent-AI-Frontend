@@ -791,7 +791,7 @@ body {
 
     line-height: 1.7;
 
-    white-space: pre-wrap;
+    white-space: normal;
 
     height: auto;
     min-height: 0;
