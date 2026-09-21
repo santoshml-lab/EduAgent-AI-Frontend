@@ -776,7 +776,7 @@ body {
 }
 
 .answer-box {
-    padding: 20px;
+    padding: 16px;
 
     border-radius: 12px;
 
@@ -789,10 +789,14 @@ body {
 
     font-size: 13px;
 
-    line-height: 1.8;
+    line-height: 1.7;
 
     white-space: pre-wrap;
+
+    height: auto;
+    min-height: 0;
 }
+    
 
 
 /* =====================================================
