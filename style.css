@@ -2855,5 +2855,184 @@ footer a:hover {
     }
 }
 
+/* =====================================================
+   RESPONSIVE - FINAL COMPETITION POLISH
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .app-shell {
+        overflow-x: hidden;
+    }
+
+    .sidebar {
+        width: 210px;
+    }
+
+    .main-content {
+        margin-left: 210px;
+    }
+
+    .workflow-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 14px;
+    }
+
+    .workflow-node {
+        min-width: 175px;
+        flex-shrink: 0;
+    }
+
+    .workflow-line {
+        flex-shrink: 0;
+    }
+
+    .response-panel {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .sources-section {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .source-card {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+}
+
+
+/* =====================================================
+   TABLET / SMALL SCREEN
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .sidebar {
+        width: 72px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .main-content {
+        margin-left: 72px;
+    }
+
+    .brand-name,
+    .brand-subtitle,
+    .sidebar-label,
+    .sidebar-nav .nav-item span:last-child,
+    .sidebar-bottom {
+        display: none;
+    }
+
+    .brand {
+        justify-content: center;
+    }
+
+    .brand-icon {
+        margin: 0 auto;
+    }
+
+    .sidebar-nav .nav-item {
+        justify-content: center;
+        padding: 11px 8px;
+    }
+
+    .hero-section,
+    .response-panel,
+    .workflow-section,
+    .capabilities-section {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    .workflow-node {
+        min-width: 165px;
+    }
+
+    .workflow-line {
+        width: 24px;
+    }
+
+    .demo-area {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .sidebar {
+        width: 58px;
+    }
+
+    .main-content {
+        margin-left: 58px;
+    }
+
+    .topbar {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .hero-section,
+    .response-panel,
+    .workflow-section,
+    .capabilities-section {
+        margin-left: 6px;
+        margin-right: 6px;
+        border-radius: 13px;
+    }
+
+    .workflow-container {
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+
+    .workflow-node {
+        min-width: 155px;
+    }
+
+    .workflow-title {
+        font-size: 9px;
+    }
+
+    .node-status {
+        font-size: 7px;
+    }
+
+    .source-card {
+        padding: 11px;
+    }
+
+    #answerBox {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .markdown-table {
+        min-width: 500px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .interactive-quiz {
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+    }
+}
+
   
     
