@@ -2243,5 +2243,37 @@ body {
     }
 }
 
+/* =====================================================
+   AGENT WORKFLOW - LIVE EXECUTION INDICATOR
+===================================================== */
+
+.workflow-caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.workflow-caption::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.65);
+    animation: liveDot 1.4s ease-in-out infinite;
+}
+
+@keyframes liveDot {
+    0%, 100% {
+        opacity: 0.45;
+        transform: scale(0.85);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
   
     
