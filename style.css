@@ -2697,5 +2697,38 @@ footer a:hover {
     letter-spacing: -0.3px;
 }
 
+/* =====================================================
+   SIDEBAR - BOTTOM AREA POLISH
+===================================================== */
+
+.sidebar-bottom {
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+    padding-top: 14px;
+}
+
+.sidebar-bottom > * {
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.sidebar-bottom > *:hover {
+    background: rgba(124, 58, 237, 0.06);
+    border-color: rgba(124, 58, 237, 0.18);
+    transform: translateY(-1px);
+}
+
+.sidebar-bottom .profile,
+.sidebar-bottom .user-profile {
+    border-radius: 12px;
+}
+
+.sidebar-bottom .avatar {
+    box-shadow:
+        0 0 0 1px rgba(124, 58, 237, 0.18),
+        0 0 14px rgba(124, 58, 237, 0.08);
+}
+
   
     
