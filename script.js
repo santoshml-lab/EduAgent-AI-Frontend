@@ -1455,20 +1455,20 @@ function parseTableRow(line) {
 
 /* =====================================================
    INTERACTIVE QUIZ
+   Supports backend plain-text MCQs
 ===================================================== */
 
-function renderQuiz(
-    answer
-) {
+function renderQuiz(answer) {
 
     if (!answer) {
         return "";
     }
 
-
     let quiz;
 
-
+    /*
+     * First try JSON format
+     */
     try {
 
         quiz =
@@ -1478,15 +1478,20 @@ function renderQuiz(
 
     } catch (error) {
 
-        return "";
+        /*
+         * Backend may return normal text MCQs.
+         * Convert that text into quiz structure.
+         */
+        quiz =
+            parsePlainTextQuiz(
+                String(answer)
+            );
     }
 
 
     if (
         !quiz ||
-        !Array.isArray(
-            quiz.questions
-        ) ||
+        !Array.isArray(quiz.questions) ||
         quiz.questions.length === 0
     ) {
 
@@ -1500,29 +1505,22 @@ function renderQuiz(
             .substring(2)}`;
 
 
-    setTimeout(
-        () => {
+    setTimeout(() => {
 
-            const quizElement =
-                document.getElementById(
-                    quizId
-                );
+        const quizElement =
+            document.getElementById(quizId);
 
+        if (!quizElement) {
+            return;
+        }
 
-            if (!quizElement) {
-                return;
-            }
+        initializeQuiz(
+            quizElement,
+            quiz.questions,
+            quiz
+        );
 
-
-            initializeQuiz(
-                quizElement,
-                quiz.questions,
-                quiz
-            );
-
-        },
-        0
-    );
+    }, 0);
 
 
     return `
@@ -1536,6 +1534,175 @@ function renderQuiz(
         </div>
     `;
 }
+
+
+/* =====================================================
+   PLAIN TEXT → QUIZ PARSER
+===================================================== */
+
+function parsePlainTextQuiz(text) {
+
+    if (!text) {
+        return null;
+    }
+
+
+    /*
+     * Normalize line breaks
+     */
+    const normalized =
+        text
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .trim();
+
+
+    /*
+     * Split using:
+     *
+     * 1.
+     * 2.
+     * 3.
+     * etc.
+     */
+
+    const questionBlocks =
+        normalized
+            .split(
+                /(?=\n?\s*\d+\.\s+)/g
+            )
+            .map(
+                block => block.trim()
+            )
+            .filter(
+                block =>
+                    /^\d+\.\s+/.test(block)
+            );
+
+
+    const questions = [];
+
+
+    questionBlocks.forEach(
+        block => {
+
+            /*
+             * Question number
+             */
+            const questionMatch =
+                block.match(
+                    /^\d+\.\s+([\s\S]*?)(?=\n\s*A[.)]\s+)/i
+                );
+
+
+            if (!questionMatch) {
+                return;
+            }
+
+
+            const questionText =
+                questionMatch[1]
+                    .trim();
+
+
+            /*
+             * Extract options
+             */
+            const optionRegex =
+                /(?:^|\n)\s*([A-D])[.)]\s*([\s\S]*?)(?=\n\s*[A-D][.)]\s+|\n\s*(?:Answer|Correct Answer)\s*:|$)/gi;
+
+
+            const options = {};
+
+
+            let match;
+
+
+            while (
+                (match =
+                    optionRegex.exec(block)) !== null
+            ) {
+
+                const key =
+                    match[1]
+                        .toUpperCase();
+
+                const value =
+                    match[2]
+                        .replace(/\s+/g, " ")
+                        .trim();
+
+                if (value) {
+                    options[key] = value;
+                }
+            }
+
+
+            /*
+             * Correct answer
+             */
+            const answerMatch =
+                block.match(
+                    /(?:Answer|Correct Answer)\s*:\s*([A-D])/i
+                );
+
+
+            const correctAnswer =
+                answerMatch
+                    ? answerMatch[1]
+                        .toUpperCase()
+                    : "";
+
+
+            /*
+             * Need at least 2 options
+             */
+            if (
+                questionText &&
+                Object.keys(options).length >= 2 &&
+                correctAnswer
+            ) {
+
+                questions.push({
+
+                    question:
+                        questionText,
+
+                    options:
+                        options,
+
+                    correct_answer:
+                        correctAnswer,
+
+                    explanation:
+                        "Review the explanation and compare the selected answer with the correct concept."
+                });
+            }
+
+        }
+    );
+
+
+    if (questions.length === 0) {
+        return null;
+    }
+
+
+    return {
+
+        topic:
+            "Photosynthesis Quiz",
+
+        questions:
+            questions
+
+    };
+}
+
+
+
+
+            
 
 
 /* =====================================================
