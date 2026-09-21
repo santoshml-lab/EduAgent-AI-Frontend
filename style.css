@@ -2615,5 +2615,53 @@ footer a:hover {
     transform: scaleY(1);
 }
 
+/* =====================================================
+   SIDEBAR - AGENT STATUS POLISH
+===================================================== */
+
+.sidebar .status-dot {
+    position: relative;
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 8px rgba(34, 197, 94, 0.65);
+}
+
+.sidebar .status-dot::after {
+    content: "";
+
+    position: absolute;
+    inset: -4px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(34, 197, 94, 0.25);
+
+    animation: sidebarStatusPulse 1.8s ease-out infinite;
+}
+
+@keyframes sidebarStatusPulse {
+    0% {
+        transform: scale(0.7);
+        opacity: 0.8;
+    }
+
+    70% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
   
     
