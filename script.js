@@ -1134,10 +1134,16 @@ function formatAnswer(text) {
                     </div>
                 `;
 
+tableHTML = tableHTML.replace(/\s*\n\s*/g, "");
 
-                output.push(
-                    tableHTML
-                );
+output.push(
+    tableHTML
+);
+                
+                            
+                    
+
+                
 
                 continue;
             }
