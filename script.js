@@ -261,10 +261,14 @@ function getToolDisplayName(tool) {
             "Calculator Recovery",
 
         web_search:
-            "Web Search",
+          "SerpApi · Web Search",
 
         web_search_retry:
-            "Web Search Recovery",
+          "SerpApi · Web Search Recovery",
+            
+
+        
+            
 
         quiz_generator:
             "Quiz Generator",
@@ -495,13 +499,25 @@ async function animateAgentWorkflow(
         }
     }
 
-
-    completeWorkflowStep(
-        "tool",
-        tools.length
-            ? `${tools.length} step(s) executed`
-            : "No tool required"
+    const executedToolNames = tools
+    .filter(item => {
+        const tool = item?.tool || "";
+        return !tool.includes("validator");
+    })
+    .map(item =>
+        getToolDisplayName(item?.tool || "")
     );
+
+const uniqueToolNames = [
+    ...new Set(executedToolNames)
+];
+
+completeWorkflowStep(
+    "tool",
+    uniqueToolNames.length
+        ? uniqueToolNames.join(" → ")
+        : "No tool required"
+);
 
 
     activateWorkflowStep(
