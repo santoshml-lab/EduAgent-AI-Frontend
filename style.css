@@ -2102,5 +2102,108 @@ body {
     }
 }
 
+/* =====================================================
+   AGENT WORKFLOW - NODE CONNECTION POLISH
+===================================================== */
+
+.workflow-container {
+    position: relative;
+}
+
+/* Connector line */
+.workflow-line {
+    height: 2px;
+    width: 42px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(100, 116, 139, 0.25),
+        rgba(124, 58, 237, 0.55),
+        rgba(100, 116, 139, 0.25)
+    );
+
+    border-radius: 999px;
+}
+
+/* Small connection point */
+.workflow-line::before,
+.workflow-line::after {
+    content: "";
+
+    position: absolute;
+
+    width: 5px;
+    height: 5px;
+
+    top: 50%;
+
+    border-radius: 50%;
+
+    transform: translateY(-50%);
+
+    background: #475569;
+}
+
+.workflow-line::before {
+    left: 0;
+}
+
+.workflow-line::after {
+    right: 0;
+}
+
+/* Active connection */
+.workflow-node.active + .workflow-line {
+    background: linear-gradient(
+        90deg,
+        #7c3aed,
+        #a78bfa,
+        #7c3aed
+    );
+
+    box-shadow:
+        0 0 10px rgba(124, 58, 237, 0.35);
+}
+
+.workflow-node.active + .workflow-line::before,
+.workflow-node.active + .workflow-line::after {
+    background: #a78bfa;
+
+    box-shadow:
+        0 0 8px rgba(167, 139, 250, 0.7);
+}
+
+/* Successful connection */
+.workflow-node.success + .workflow-line {
+    background: linear-gradient(
+        90deg,
+        rgba(34, 197, 94, 0.65),
+        rgba(34, 197, 94, 0.25)
+    );
+}
+
+.workflow-node.success + .workflow-line::before {
+    background: #4ade80;
+}
+
+/* Better node depth */
+.workflow-node {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025),
+        0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.workflow-node:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(124, 58, 237, 0.3);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
   
     
