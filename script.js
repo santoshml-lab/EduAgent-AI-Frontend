@@ -142,10 +142,6 @@ function useDemoPrompt(question) {
 
     questionInput.focus();
 
-    /*
-     * Small delay makes the demo feel
-     * natural while recording.
-     */
     setTimeout(() => {
 
         askAgent(question);
@@ -415,11 +411,6 @@ async function animateAgentWorkflow(
         getTraceTools(trace);
 
 
-    /*
-     * STEP 1
-     * User query
-     */
-
     activateWorkflowStep(
         "user",
         "Received"
@@ -432,11 +423,6 @@ async function animateAgentWorkflow(
         "Received"
     );
 
-
-    /*
-     * STEP 2
-     * Planner
-     */
 
     activateWorkflowStep(
         "planner",
@@ -468,11 +454,6 @@ async function animateAgentWorkflow(
     }
 
 
-    /*
-     * STEP 3
-     * Actual tool execution
-     */
-
     activateWorkflowStep(
         "tool",
         "Executing..."
@@ -485,10 +466,6 @@ async function animateAgentWorkflow(
 
     } else {
 
-        /*
-         * Show each actual tool
-         * in the status text.
-         */
         for (
             const item of tools
         ) {
@@ -496,10 +473,6 @@ async function animateAgentWorkflow(
             const tool =
                 item?.tool || "";
 
-            /*
-             * Validator steps are shown
-             * separately in step 4.
-             */
             if (
                 tool.includes(
                     "validator"
@@ -530,11 +503,6 @@ async function animateAgentWorkflow(
             : "No tool required"
     );
 
-
-    /*
-     * STEP 4
-     * Validation
-     */
 
     activateWorkflowStep(
         "validation",
@@ -613,11 +581,6 @@ async function animateAgentWorkflow(
     }
 
 
-    /*
-     * STEP 5
-     * Final response
-     */
-
     activateWorkflowStep(
         "response",
         "Generating..."
@@ -653,14 +616,6 @@ function sleep(ms) {
 ===================================================== */
 
 function showToolChain(trace) {
-
-    /*
-     * Old tool-chain panel is removed
-     * from the new HTML.
-     *
-     * We now use the Agent Workflow
-     * section instead.
-     */
 
     if (!Array.isArray(trace)) {
         return;
@@ -771,10 +726,6 @@ async function askAgent(
     resetWorkflow();
 
 
-    /*
-     * Disable button during request.
-     */
-
     if (askButton) {
 
         askButton.disabled =
@@ -787,10 +738,6 @@ async function askAgent(
             `;
     }
 
-
-    /*
-     * Initial answer state.
-     */
 
     if (answerBox) {
 
@@ -811,9 +758,6 @@ async function askAgent(
 
     try {
 
-        /*
-         * User received
-         */
         activateWorkflowStep(
             "user",
             "Received"
@@ -823,9 +767,6 @@ async function askAgent(
         await sleep(250);
 
 
-        /*
-         * Planner
-         */
         activateWorkflowStep(
             "planner",
             "Planning..."
@@ -864,10 +805,6 @@ async function askAgent(
         }
 
 
-        /*
-         * Backend response
-         */
-
         const data =
             await response.json();
 
@@ -880,36 +817,18 @@ async function askAgent(
                 : [];
 
 
-        /*
-         * Stop current workflow
-         * state before replaying actual trace.
-         */
-
         resetWorkflow();
 
-
-        /*
-         * Replay actual agentic
-         * workflow.
-         */
 
         await animateAgentWorkflow(
             trace
         );
 
 
-        /*
-         * Sources
-         */
-
         showSources(
             data.sources || []
         );
 
-
-        /*
-         * Final answer
-         */
 
         if (answerBox) {
 
@@ -933,11 +852,6 @@ async function askAgent(
             `;
         }
 
-
-        /*
-         * Scroll response
-         * into view for demo.
-         */
 
         if (responseSection) {
 
@@ -987,10 +901,6 @@ async function askAgent(
 
     } finally {
 
-        /*
-         * Re-enable button.
-         */
-
         if (askButton) {
 
             askButton.disabled =
@@ -1030,6 +940,10 @@ if (questionInput) {
 }
 
 
+/* =====================================================
+   FORMAT ANSWER
+===================================================== */
+
 function formatAnswer(text) {
 
     if (!text) {
@@ -1037,6 +951,7 @@ function formatAnswer(text) {
     }
 
     let formatted = String(text);
+
 
     /* =================================================
        ESCAPE HTML
@@ -1121,8 +1036,6 @@ function formatAnswer(text) {
                 `;
 
 
-                /* HEADER */
-
                 headerCells.forEach(
                     cell => {
 
@@ -1140,12 +1053,8 @@ function formatAnswer(text) {
                 `;
 
 
-                /* Skip header + separator */
-
                 i += 2;
 
-
-                /* BODY */
 
                 while (i < lines.length) {
 
@@ -1216,8 +1125,6 @@ function formatAnswer(text) {
             }
         }
 
-
-        /* NORMAL LINE */
 
         output.push(line);
 
@@ -1292,33 +1199,6 @@ function formatAnswer(text) {
     return formatted;
 }
 
-    
-        
-                
-
-                        
-                
-                                    
-                    
-                
-        
-        
-
-    
-
-    
-
-    
-
-            
-                                
-                 
-                    
-                    
-    
-    
-    
-
 
 /* =====================================================
    MARKDOWN TABLE ROW PARSER
@@ -1330,10 +1210,6 @@ function parseTableRow(line) {
         return [];
     }
 
-
-    /*
-     * Remove first and last |
-     */
 
     let content =
         line.trim();
@@ -1357,14 +1233,6 @@ function parseTableRow(line) {
             );
     }
 
-
-    /*
-     * Split cells.
-     *
-     * Supports escaped pipes:
-     *
-     * \|
-     */
 
     const cells = [];
 
@@ -1420,42 +1288,10 @@ function parseTableRow(line) {
 
     return cells;
 }
-   
-
-
-    
-
-
-    
-                    
-            
-            
-
-
-            
-                        
-       
-   
-    
-            
-            
-     
-     
-     
-   
-                
-
-        
-
-        
-
-
-    
 
 
 /* =====================================================
    INTERACTIVE QUIZ
-   Supports backend plain-text MCQs
 ===================================================== */
 
 function renderQuiz(answer) {
@@ -1464,11 +1300,13 @@ function renderQuiz(answer) {
         return "";
     }
 
-    let quiz;
+    let quiz = null;
 
-    /*
-     * First try JSON format
-     */
+
+    /* =================================================
+       1. JSON QUIZ
+    ================================================= */
+
     try {
 
         quiz =
@@ -1478,16 +1316,29 @@ function renderQuiz(answer) {
 
     } catch (error) {
 
-        /*
-         * Backend may return normal text MCQs.
-         * Convert that text into quiz structure.
-         */
+        quiz = null;
+    }
+
+
+    /* =================================================
+       2. PLAIN TEXT / TABLE QUIZ
+    ================================================= */
+
+    if (
+        !quiz ||
+        !Array.isArray(quiz.questions)
+    ) {
+
         quiz =
             parsePlainTextQuiz(
                 String(answer)
             );
     }
 
+
+    /* =================================================
+       3. VALIDATION
+    ================================================= */
 
     if (
         !quiz ||
@@ -1499,16 +1350,69 @@ function renderQuiz(answer) {
     }
 
 
+    /* =================================================
+       4. REMOVE INVALID QUESTIONS
+    ================================================= */
+
+    quiz.questions =
+        quiz.questions.filter(
+            question => {
+
+                if (
+                    !question ||
+                    !question.question ||
+                    !question.options
+                ) {
+                    return false;
+                }
+
+                const options =
+                    question.options;
+
+                return (
+                    options.A &&
+                    options.B &&
+                    options.C &&
+                    options.D &&
+                    /^[A-D]$/i.test(
+                        String(
+                            question.correct_answer ||
+                            ""
+                        )
+                    )
+                );
+            }
+        );
+
+
+    if (
+        quiz.questions.length === 0
+    ) {
+
+        return "";
+    }
+
+
+    /* =================================================
+       5. QUIZ ID
+    ================================================= */
+
     const quizId =
         `quiz-${Date.now()}-${Math.random()
             .toString(36)
             .substring(2)}`;
 
 
+    /* =================================================
+       6. INITIALIZE AFTER INSERTION
+    ================================================= */
+
     setTimeout(() => {
 
         const quizElement =
-            document.getElementById(quizId);
+            document.getElementById(
+                quizId
+            );
 
         if (!quizElement) {
             return;
@@ -1523,253 +1427,465 @@ function renderQuiz(answer) {
     }, 0);
 
 
+    /* =================================================
+       7. COMPACT QUIZ CONTAINER
+    ================================================= */
+
     return `
         <div
             id="${quizId}"
             class="interactive-quiz"
+            style="
+                height:auto !important;
+                min-height:0 !important;
+                max-height:none !important;
+                overflow:visible !important;
+                writing-mode:horizontal-tb !important;
+            "
         >
-            <div class="quiz-loading">
+
+            <div
+                class="quiz-loading"
+                style="
+                    height:auto !important;
+                    min-height:0 !important;
+                "
+            >
                 Loading quiz...
             </div>
+
         </div>
     `;
 }
 
 
-function parsePlainTextQuiz(text) {
-    const normalized = String(text || "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .trim();
+/* =====================================================
+   PLAIN TEXT QUIZ PARSER
+===================================================== */
 
-    if (!normalized) return null;
+function parsePlainTextQuiz(text) {
+
+    const normalized =
+        String(text || "")
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .trim();
+
+
+    if (!normalized) {
+        return null;
+    }
+
 
     const questions = [];
 
-    // --------------------------------------------------
-    // 1. TAB-SEPARATED TABLE FORMAT
-    // Example:
-    // Question    Option A    Option B    Option C    Option D    A
-    // --------------------------------------------------
-    const lines = normalized
-        .split("\n")
-        .map(line => line.trim())
-        .filter(Boolean);
 
-    for (const line of lines) {
-        if (!line.includes("\t")) continue;
-
-        const cols = line
-            .split("\t")
-            .map(x => x.trim())
+    const lines =
+        normalized
+            .split("\n")
+            .map(line => line.trim())
             .filter(Boolean);
 
-        // Expected:
-        // [number/question, question, A, B, C, D, answer]
-        // OR
-        // [question, A, B, C, D, answer]
 
-        let questionText = "";
-        let optionStart = -1;
-        let correctAnswer = "";
+    /* =================================================
+       HELPER
+    ================================================= */
 
-        if (
-            cols.length >= 7 &&
-            /^[A-D]$/i.test(cols[cols.length - 1])
-        ) {
-            // Number + Question + 4 options + Answer
-            questionText = cols[1];
-            optionStart = 2;
-            correctAnswer = cols[cols.length - 1].toUpperCase();
-        } else if (
-            cols.length >= 6 &&
-            /^[A-D]$/i.test(cols[cols.length - 1])
-        ) {
-            // Question + 4 options + Answer
-            questionText = cols[0];
-            optionStart = 1;
-            correctAnswer = cols[cols.length - 1].toUpperCase();
+    function addQuestion(
+        questionText,
+        optionValues,
+        correctAnswer
+    ) {
+
+        if (!questionText) {
+            return;
         }
 
-        if (
-            questionText &&
-            optionStart >= 0 &&
-            cols.length >= optionStart + 5
-        ) {
-            const options = {
-                A: cols[optionStart],
-                B: cols[optionStart + 1],
-                C: cols[optionStart + 2],
-                D: cols[optionStart + 3]
-            };
 
-            if (
-                options.A &&
-                options.B &&
-                options.C &&
-                options.D &&
-                /^[A-D]$/.test(correctAnswer)
-            ) {
-                questions.push({
-                    question: questionText,
-                    options,
-                    correct_answer: correctAnswer,
-                    explanation:
-                        "Review the explanation and compare the selected answer with the correct concept."
-                });
-            }
+        const options = {
+            A: optionValues[0] || "",
+            B: optionValues[1] || "",
+            C: optionValues[2] || "",
+            D: optionValues[3] || ""
+        };
+
+
+        if (
+            !options.A ||
+            !options.B ||
+            !options.C ||
+            !options.D
+        ) {
+            return;
         }
+
+
+        if (
+            !/^[A-D]$/i.test(
+                correctAnswer
+            )
+        ) {
+            return;
+        }
+
+
+        questions.push({
+
+            question:
+                questionText.trim(),
+
+            options,
+
+            correct_answer:
+                String(
+                    correctAnswer
+                )
+                    .trim()
+                    .toUpperCase(),
+
+            explanation:
+                "Review the concept and compare your answer with the correct option."
+
+        });
     }
 
-    // --------------------------------------------------
-    // 2. MARKDOWN PIPE TABLE
-    // Example:
-    // | 1 | Question | A | B | C | D | A |
-    // --------------------------------------------------
-    if (questions.length === 0 && normalized.includes("|")) {
-        const tableLines = lines.filter(line => line.includes("|"));
 
-        for (const line of tableLines) {
-            const cols = line
-                .split("|")
-                .map(x => x.trim())
-                .filter(Boolean);
+    /* =================================================
+       1. TAB-SEPARATED TABLE
+    ================================================= */
 
-            // Skip markdown separator/header rows
+    for (const line of lines) {
+
+        if (!line.includes("\t")) {
+            continue;
+        }
+
+
+        const cols =
+            line
+                .split("\t")
+                .map(
+                    value =>
+                        value.trim()
+                );
+
+
+        /*
+         * Remove completely empty cells
+         */
+        const cleanCols =
+            cols.filter(
+                value =>
+                    value !== ""
+            );
+
+
+        if (
+            cleanCols.length < 6
+        ) {
+            continue;
+        }
+
+
+        const last =
+            cleanCols[
+                cleanCols.length - 1
+            ];
+
+
+        if (
+            !/^[A-D]$/i.test(last)
+        ) {
+            continue;
+        }
+
+
+        /*
+         * Format:
+         *
+         * Question | A | B | C | D | Answer
+         *
+         * OR
+         *
+         * Number | Question | A | B | C | D | Answer
+         */
+
+        let questionText;
+        let optionStart;
+
+
+        if (
+            cleanCols.length >= 7 &&
+            /^\d+$/.test(
+                cleanCols[0]
+            )
+        ) {
+
+            questionText =
+                cleanCols[1];
+
+            optionStart = 2;
+
+        } else {
+
+            questionText =
+                cleanCols[0];
+
+            optionStart = 1;
+        }
+
+
+        const optionValues =
+            cleanCols.slice(
+                optionStart,
+                optionStart + 4
+            );
+
+
+        addQuestion(
+            questionText,
+            optionValues,
+            last
+        );
+    }
+
+
+    /* =================================================
+       2. PIPE / MARKDOWN TABLE
+    ================================================= */
+
+    if (
+        questions.length === 0 &&
+        normalized.includes("|")
+    ) {
+
+        for (
+            const line of lines
+        ) {
+
             if (
-                cols.length < 6 ||
-                cols.some(col => /^[-:]+$/.test(col))
+                !line.includes("|")
             ) {
                 continue;
             }
 
-            const last = cols[cols.length - 1];
 
-            if (!/^[A-D]$/i.test(last)) continue;
+            const cols =
+                parseTableRow(
+                    line
+                );
+
+
+            if (
+                cols.length < 6
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Skip separator row
+             */
+
+            if (
+                cols.every(
+                    cell =>
+                        /^:?-{3,}:?$/.test(
+                            cell.trim()
+                        )
+                )
+            ) {
+                continue;
+            }
+
+
+            const last =
+                cols[
+                    cols.length - 1
+                ];
+
+
+            if (
+                !/^[A-D]$/i.test(last)
+            ) {
+                continue;
+            }
+
 
             let questionText;
             let optionStart;
 
-            if (cols.length >= 7) {
-                questionText = cols[1];
+
+            if (
+                cols.length >= 7 &&
+                /^\d+$/.test(
+                    cols[0]
+                )
+            ) {
+
+                questionText =
+                    cols[1];
+
                 optionStart = 2;
+
             } else {
-                questionText = cols[0];
+
+                questionText =
+                    cols[0];
+
                 optionStart = 1;
             }
 
-            if (!questionText) continue;
 
-            const options = {
-                A: cols[optionStart],
-                B: cols[optionStart + 1],
-                C: cols[optionStart + 2],
-                D: cols[optionStart + 3]
-            };
+            const optionValues =
+                cols.slice(
+                    optionStart,
+                    optionStart + 4
+                );
 
-            if (
-                options.A &&
-                options.B &&
-                options.C &&
-                options.D
-            ) {
-                questions.push({
-                    question: questionText,
-                    options,
-                    correct_answer: last.toUpperCase(),
-                    explanation:
-                        "Review the explanation and compare the selected answer with the correct concept."
-                });
-            }
+
+            addQuestion(
+                questionText,
+                optionValues,
+                last
+            );
         }
     }
 
-    // --------------------------------------------------
-    // 3. NORMAL A/B/C/D TEXT FORMAT
-    // --------------------------------------------------
-    if (questions.length === 0) {
-        const questionBlocks = normalized
-            .split(/(?=\n?\s*\d+\.\s+)/g)
-            .map(block => block.trim())
-            .filter(block => /^\d+\.\s+/.test(block));
 
-        for (const block of questionBlocks) {
-            const questionMatch = block.match(
-                /^\d+\.\s+([\s\S]*?)(?=\n\s*A[.)]\s+)/i
-            );
+    /* =================================================
+       3. STANDARD MCQ FORMAT
+    ================================================= */
 
-            if (!questionMatch) continue;
+    if (
+        questions.length === 0
+    ) {
 
-            const questionText = questionMatch[1].trim();
+        const questionBlocks =
+            normalized
+                .split(
+                    /(?=\n?\s*\d+\.\s+)/g
+                )
+                .map(
+                    block =>
+                        block.trim()
+                )
+                .filter(
+                    block =>
+                        /^\d+\.\s+/.test(
+                            block
+                        )
+                );
+
+
+        for (
+            const block of questionBlocks
+        ) {
+
+            const questionMatch =
+                block.match(
+                    /^\d+\.\s+([\s\S]*?)(?=\n\s*A[.)]\s+)/i
+                );
+
+
+            if (!questionMatch) {
+                continue;
+            }
+
+
+            const questionText =
+                questionMatch[1]
+                    .trim();
+
 
             const optionRegex =
                 /(?:^|\n)\s*([A-D])[.)]\s*([\s\S]*?)(?=\n\s*[A-D][.)]\s+|\n\s*(?:Answer|Correct Answer)\s*:|$)/gi;
 
+
             const options = {};
+
+
             let match;
 
-            while ((match = optionRegex.exec(block)) !== null) {
-                const key = match[1].toUpperCase();
-                const value = match[2]
-                    .replace(/\s+/g, " ")
-                    .trim();
+
+            while (
+                (match =
+                    optionRegex.exec(
+                        block
+                    )) !== null
+            ) {
+
+                const key =
+                    match[1]
+                        .toUpperCase();
+
+
+                const value =
+                    match[2]
+                        .replace(
+                            /\s+/g,
+                            " "
+                        )
+                        .trim();
+
 
                 if (value) {
-                    options[key] = value;
+
+                    options[key] =
+                        value;
                 }
             }
 
-            const answerMatch = block.match(
-                /(?:Answer|Correct Answer)\s*:\s*([A-D])/i
+
+            const answerMatch =
+                block.match(
+                    /(?:Answer|Correct Answer)\s*:\s*([A-D])/i
+                );
+
+
+            const correctAnswer =
+                answerMatch
+                    ? answerMatch[1]
+                        .toUpperCase()
+                    : "";
+
+
+            addQuestion(
+                questionText,
+                [
+                    options.A,
+                    options.B,
+                    options.C,
+                    options.D
+                ],
+                correctAnswer
             );
-
-            const correctAnswer = answerMatch
-                ? answerMatch[1].toUpperCase()
-                : "";
-
-            if (
-                questionText &&
-                options.A &&
-                options.B &&
-                options.C &&
-                options.D &&
-                /^[A-D]$/.test(correctAnswer)
-            ) {
-                questions.push({
-                    question: questionText,
-                    options,
-                    correct_answer: correctAnswer,
-                    explanation:
-                        "Review the explanation and compare the selected answer with the correct concept."
-                });
-            }
         }
     }
 
-    // --------------------------------------------------
-    // FINAL RESULT
-    // --------------------------------------------------
-    if (questions.length === 0) {
+
+    /* =================================================
+       FINAL RESULT
+    ================================================= */
+
+    if (
+        questions.length === 0
+    ) {
+
         return null;
     }
 
+
     return {
-        topic: "Photosynthesis Quiz",
-        questions
+
+        topic:
+            "Photosynthesis Quiz",
+
+        questions:
+            questions
+
     };
 }
-   
-            
-
-
-            
-                
-    
-
-
-
-
-            
 
 
 /* =====================================================
@@ -1805,9 +1921,27 @@ function initializeQuiz(
 
         quizElement.innerHTML = `
 
-            <div class="quiz-header">
+            <div
+                class="quiz-header"
+                style="
+                    height:auto !important;
+                    min-height:0 !important;
+                    display:flex !important;
+                    flex-direction:row !important;
+                    align-items:center !important;
+                    justify-content:space-between !important;
+                    gap:16px !important;
+                    writing-mode:horizontal-tb !important;
+                "
+            >
 
-                <div class="quiz-title">
+                <div
+                    class="quiz-title"
+                    style="
+                        writing-mode:horizontal-tb !important;
+                        white-space:normal !important;
+                    "
+                >
 
                     ${escapeHTML(
                         quiz.topic ||
@@ -1817,19 +1951,34 @@ function initializeQuiz(
 
                 </div>
 
-                <div class="quiz-progress">
-
-                    Question
-                    ${currentQuestion + 1}
-                    of
-                    ${questions.length}
-
+                <div
+                    class="quiz-progress"
+                    style="
+                        display:inline-flex !important;
+                        width:auto !important;
+                        height:auto !important;
+                        min-height:0 !important;
+                        max-height:none !important;
+                        white-space:nowrap !important;
+                        writing-mode:horizontal-tb !important;
+                        transform:none !important;
+                        flex-shrink:0 !important;
+                        align-items:center !important;
+                    "
+                >
+                    Question ${currentQuestion + 1} of ${questions.length}
                 </div>
 
             </div>
 
 
-            <div class="quiz-question">
+            <div
+                class="quiz-question"
+                style="
+                    height:auto !important;
+                    min-height:0 !important;
+                "
+            >
 
                 <h3>
                     ${escapeHTML(
@@ -2120,7 +2269,13 @@ function initializeQuiz(
 
         quizElement.innerHTML = `
 
-            <div class="quiz-result">
+            <div
+                class="quiz-result"
+                style="
+                    height:auto !important;
+                    min-height:0 !important;
+                "
+            >
 
                 <div class="quiz-result-icon">
                     🎯
@@ -2280,6 +2435,7 @@ function escapeHTML(
 ===================================================== */
 
 resetWorkflow();
+        
 
   
 
