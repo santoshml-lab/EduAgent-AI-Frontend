@@ -1536,168 +1536,235 @@ function renderQuiz(answer) {
 }
 
 
-/* =====================================================
-   PLAIN TEXT → QUIZ PARSER
-===================================================== */
-
 function parsePlainTextQuiz(text) {
+    const normalized = String(text || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .trim();
 
-    if (!text) {
-        return null;
-    }
-
-
-    /*
-     * Normalize line breaks
-     */
-    const normalized =
-        text
-            .replace(/\r\n/g, "\n")
-            .replace(/\r/g, "\n")
-            .trim();
-
-
-    /*
-     * Split using:
-     *
-     * 1.
-     * 2.
-     * 3.
-     * etc.
-     */
-
-    const questionBlocks =
-        normalized
-            .split(
-                /(?=\n?\s*\d+\.\s+)/g
-            )
-            .map(
-                block => block.trim()
-            )
-            .filter(
-                block =>
-                    /^\d+\.\s+/.test(block)
-            );
-
+    if (!normalized) return null;
 
     const questions = [];
 
+    // --------------------------------------------------
+    // 1. TAB-SEPARATED TABLE FORMAT
+    // Example:
+    // Question    Option A    Option B    Option C    Option D    A
+    // --------------------------------------------------
+    const lines = normalized
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean);
 
-    questionBlocks.forEach(
-        block => {
+    for (const line of lines) {
+        if (!line.includes("\t")) continue;
 
-            /*
-             * Question number
-             */
-            const questionMatch =
-                block.match(
-                    /^\d+\.\s+([\s\S]*?)(?=\n\s*A[.)]\s+)/i
-                );
+        const cols = line
+            .split("\t")
+            .map(x => x.trim())
+            .filter(Boolean);
 
+        // Expected:
+        // [number/question, question, A, B, C, D, answer]
+        // OR
+        // [question, A, B, C, D, answer]
 
-            if (!questionMatch) {
-                return;
+        let questionText = "";
+        let optionStart = -1;
+        let correctAnswer = "";
+
+        if (
+            cols.length >= 7 &&
+            /^[A-D]$/i.test(cols[cols.length - 1])
+        ) {
+            // Number + Question + 4 options + Answer
+            questionText = cols[1];
+            optionStart = 2;
+            correctAnswer = cols[cols.length - 1].toUpperCase();
+        } else if (
+            cols.length >= 6 &&
+            /^[A-D]$/i.test(cols[cols.length - 1])
+        ) {
+            // Question + 4 options + Answer
+            questionText = cols[0];
+            optionStart = 1;
+            correctAnswer = cols[cols.length - 1].toUpperCase();
+        }
+
+        if (
+            questionText &&
+            optionStart >= 0 &&
+            cols.length >= optionStart + 5
+        ) {
+            const options = {
+                A: cols[optionStart],
+                B: cols[optionStart + 1],
+                C: cols[optionStart + 2],
+                D: cols[optionStart + 3]
+            };
+
+            if (
+                options.A &&
+                options.B &&
+                options.C &&
+                options.D &&
+                /^[A-D]$/.test(correctAnswer)
+            ) {
+                questions.push({
+                    question: questionText,
+                    options,
+                    correct_answer: correctAnswer,
+                    explanation:
+                        "Review the explanation and compare the selected answer with the correct concept."
+                });
+            }
+        }
+    }
+
+    // --------------------------------------------------
+    // 2. MARKDOWN PIPE TABLE
+    // Example:
+    // | 1 | Question | A | B | C | D | A |
+    // --------------------------------------------------
+    if (questions.length === 0 && normalized.includes("|")) {
+        const tableLines = lines.filter(line => line.includes("|"));
+
+        for (const line of tableLines) {
+            const cols = line
+                .split("|")
+                .map(x => x.trim())
+                .filter(Boolean);
+
+            // Skip markdown separator/header rows
+            if (
+                cols.length < 6 ||
+                cols.some(col => /^[-:]+$/.test(col))
+            ) {
+                continue;
             }
 
+            const last = cols[cols.length - 1];
 
-            const questionText =
-                questionMatch[1]
-                    .trim();
+            if (!/^[A-D]$/i.test(last)) continue;
 
+            let questionText;
+            let optionStart;
 
-            /*
-             * Extract options
-             */
+            if (cols.length >= 7) {
+                questionText = cols[1];
+                optionStart = 2;
+            } else {
+                questionText = cols[0];
+                optionStart = 1;
+            }
+
+            if (!questionText) continue;
+
+            const options = {
+                A: cols[optionStart],
+                B: cols[optionStart + 1],
+                C: cols[optionStart + 2],
+                D: cols[optionStart + 3]
+            };
+
+            if (
+                options.A &&
+                options.B &&
+                options.C &&
+                options.D
+            ) {
+                questions.push({
+                    question: questionText,
+                    options,
+                    correct_answer: last.toUpperCase(),
+                    explanation:
+                        "Review the explanation and compare the selected answer with the correct concept."
+                });
+            }
+        }
+    }
+
+    // --------------------------------------------------
+    // 3. NORMAL A/B/C/D TEXT FORMAT
+    // --------------------------------------------------
+    if (questions.length === 0) {
+        const questionBlocks = normalized
+            .split(/(?=\n?\s*\d+\.\s+)/g)
+            .map(block => block.trim())
+            .filter(block => /^\d+\.\s+/.test(block));
+
+        for (const block of questionBlocks) {
+            const questionMatch = block.match(
+                /^\d+\.\s+([\s\S]*?)(?=\n\s*A[.)]\s+)/i
+            );
+
+            if (!questionMatch) continue;
+
+            const questionText = questionMatch[1].trim();
+
             const optionRegex =
                 /(?:^|\n)\s*([A-D])[.)]\s*([\s\S]*?)(?=\n\s*[A-D][.)]\s+|\n\s*(?:Answer|Correct Answer)\s*:|$)/gi;
 
-
             const options = {};
-
-
             let match;
 
-
-            while (
-                (match =
-                    optionRegex.exec(block)) !== null
-            ) {
-
-                const key =
-                    match[1]
-                        .toUpperCase();
-
-                const value =
-                    match[2]
-                        .replace(/\s+/g, " ")
-                        .trim();
+            while ((match = optionRegex.exec(block)) !== null) {
+                const key = match[1].toUpperCase();
+                const value = match[2]
+                    .replace(/\s+/g, " ")
+                    .trim();
 
                 if (value) {
                     options[key] = value;
                 }
             }
 
+            const answerMatch = block.match(
+                /(?:Answer|Correct Answer)\s*:\s*([A-D])/i
+            );
 
-            /*
-             * Correct answer
-             */
-            const answerMatch =
-                block.match(
-                    /(?:Answer|Correct Answer)\s*:\s*([A-D])/i
-                );
+            const correctAnswer = answerMatch
+                ? answerMatch[1].toUpperCase()
+                : "";
 
-
-            const correctAnswer =
-                answerMatch
-                    ? answerMatch[1]
-                        .toUpperCase()
-                    : "";
-
-
-            /*
-             * Need at least 2 options
-             */
             if (
                 questionText &&
-                Object.keys(options).length >= 2 &&
-                correctAnswer
+                options.A &&
+                options.B &&
+                options.C &&
+                options.D &&
+                /^[A-D]$/.test(correctAnswer)
             ) {
-
                 questions.push({
-
-                    question:
-                        questionText,
-
-                    options:
-                        options,
-
-                    correct_answer:
-                        correctAnswer,
-
+                    question: questionText,
+                    options,
+                    correct_answer: correctAnswer,
                     explanation:
                         "Review the explanation and compare the selected answer with the correct concept."
                 });
             }
-
         }
-    );
+    }
 
-
+    // --------------------------------------------------
+    // FINAL RESULT
+    // --------------------------------------------------
     if (questions.length === 0) {
         return null;
     }
 
-
     return {
-
-        topic:
-            "Photosynthesis Quiz",
-
-        questions:
-            questions
-
+        topic: "Photosynthesis Quiz",
+        questions
     };
 }
+   
+            
+
+
+            
+                
+    
 
 
 
