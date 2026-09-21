@@ -2464,6 +2464,67 @@ function escapeHTML(
         );
 }
 
+/* =====================================================
+   SIDEBAR NAVIGATION
+===================================================== */
+
+const sidebarItems = document.querySelectorAll(".sidebar-nav .nav-item");
+
+const sidebarTargets = [
+    document.querySelector(".hero-section"),       // AI Assistant
+    document.querySelector(".workflow-section"),   // Agent Workflow
+    document.getElementById("responseSection"),    // Search Sources
+    document.querySelector(".demo-area"),          // Quiz Generator
+    document.querySelector(".demo-area")           // Study Planner
+];
+
+sidebarItems.forEach((item, index) => {
+
+    item.addEventListener("click", () => {
+
+        const target = sidebarTargets[index];
+
+        if (!target) return;
+
+        target.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        sidebarItems.forEach(nav => {
+            nav.classList.remove("active");
+        });
+
+        item.classList.add("active");
+
+        // Focus the relevant demo prompt
+        if (index === 3) {
+            const quizPrompt =
+                document.querySelectorAll(".demo-prompt")[2];
+
+            if (quizPrompt) {
+                quizPrompt.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+        }
+
+        if (index === 4) {
+            const plannerPrompt =
+                document.querySelectorAll(".demo-prompt")[3];
+
+            if (plannerPrompt) {
+                plannerPrompt.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+        }
+    });
+
+});
+
 
 /* =====================================================
    INITIAL STATE
