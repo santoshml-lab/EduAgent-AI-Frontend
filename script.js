@@ -1436,12 +1436,17 @@ function renderQuiz(answer) {
             id="${quizId}"
             class="interactive-quiz"
             style="
-                height:auto !important;
-                min-height:0 !important;
-                max-height:none !important;
-                overflow:visible !important;
-                writing-mode:horizontal-tb !important;
-            "
+            height:auto !important;
+            min-height:0 !important;
+            max-height:none !important;
+            overflow:visible !important;
+            writing-mode:horizontal-tb !important;
+           white-space:normal !important;
+        "
+                
+                
+                
+            
         >
 
             <div
