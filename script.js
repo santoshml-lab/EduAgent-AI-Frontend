@@ -1211,13 +1211,16 @@ function formatAnswer(text) {
     .replace(/\n\s*\n+/g, "\n")
     .trim();
 
-    formatted = formatted.replace(
-        /\n/g,
-        "<br>"
-    );
+    formatted = formatted
+    .replace(/\n\s*\n+/g, "\n")
+    .replace(/(<br>\s*){2,}/g, "<br>")
+    .trim();
 
+formatted = formatted.replace(/\n/g, "<br>");
 
-    return formatted;
+return formatted;
+        
+        
 }
 
 
