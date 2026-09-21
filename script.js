@@ -967,6 +967,8 @@ function formatAnswer(text) {
     }
 
     let formatted = String(text);
+    formatted = formatted
+    .replace(/\n{3,}/g, "\n\n");
 
 
     /* =================================================
